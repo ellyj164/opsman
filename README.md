@@ -1,0 +1,3 @@
+# OpsMan - Field Operations Management System
+
+> Complete system initialization in progress...
