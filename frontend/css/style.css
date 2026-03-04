@@ -331,3 +331,13 @@ input, select, textarea { font: inherit; }
     .analytics-grid { grid-template-columns: 1fr; }
     .auth-card { padding: 1.75rem 1.25rem; }
 }
+
+/* New stat card color variants */
+.stat-teal   { border-left: 4px solid #00897b; }
+.stat-teal .stat-icon { background: #e0f2f1; }
+.stat-indigo { border-left: 4px solid #3949ab; }
+.stat-indigo .stat-icon { background: #e8eaf6; }
+
+/* Status badges for new modules */
+.badge-cleared  { background: #00897b; color: #fff; }
+.badge-under-review { background: #f57c00; color: #fff; }

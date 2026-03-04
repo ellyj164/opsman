@@ -148,3 +148,61 @@ INSERT INTO `alerts` (`type`, `title`, `message`, `related_to`, `related_id`, `s
 ('system',          'New Shipment Arrived: SHP-2024-002',
  'Shipment SHP-2024-002 (Automotive Parts) has arrived at New York warehouse.',
  'shipment', 2, 'info', 1);
+
+-- -------------------------------------------------------
+-- New role users
+-- -------------------------------------------------------
+INSERT INTO `users` (`username`, `email`, `password_hash`, `role`, `is_active`) VALUES
+('customs1',
+ 'customs@opsman.com',
+ '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+ 'customs_officer', 1),
+('warehouse1',
+ 'warehouse@opsman.com',
+ '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+ 'warehouse_officer', 1),
+('accountant1',
+ 'accountant@opsman.com',
+ '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+ 'accountant', 1),
+('agent1',
+ 'agent@opsman.com',
+ '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+ 'field_agent', 1);
+
+INSERT INTO `employees` (`user_id`, `full_name`, `employee_code`, `department`, `phone`, `performance_score`) VALUES
+(4, 'Carlos Customs',   'EMP-004', 'Customs Department',   '+1-555-0103', 92.00),
+(5, 'Wendy Warehouse',  'EMP-005', 'Warehouse Operations', '+1-555-0104', 89.50),
+(6, 'Alice Accountant', 'EMP-006', 'Finance & Accounting', '+1-555-0105', 97.00),
+(7, 'Felix Agent',      'EMP-007', 'Field Operations',     '+1-555-0106', 85.00);
+
+-- -------------------------------------------------------
+-- Warehouses
+-- -------------------------------------------------------
+INSERT INTO `warehouses` (`name`, `code`, `address`, `city`, `country`, `latitude`, `longitude`, `capacity_sqm`, `manager_id`, `status`) VALUES
+('Los Angeles Main Warehouse', 'WH-LA-01', '1200 Harbor Blvd', 'Los Angeles', 'USA', 33.7395, -118.2595, 5000.00, 5, 'active'),
+('New York Distribution Center', 'WH-NY-01', '450 Port Avenue', 'New York', 'USA', 40.7128, -74.0060, 3500.00, 5, 'active'),
+('Chicago Logistics Hub', 'WH-CH-01', '800 Industrial Pkwy', 'Chicago', 'USA', 41.8781, -87.6298, 4200.00, 5, 'active');
+
+-- -------------------------------------------------------
+-- Customs Declarations
+-- -------------------------------------------------------
+INSERT INTO `customs_declarations` (`shipment_id`, `declaration_no`, `declarant_name`, `hs_codes`, `invoice_value`, `currency`, `country_of_origin`, `port_of_entry`, `submission_date`, `status`, `officer_id`, `created_by`) VALUES
+(1, 'CD-2024-001', 'Global Imports Ltd', '["8471.30","8517.12"]', 185000.00, 'USD', 'China', 'Los Angeles Port', CURDATE(), 'under_review', 4, 4),
+(2, 'CD-2024-002', 'Euro Exports GmbH',  '["8708.99","8714.91"]',  97500.00, 'USD', 'Germany', 'New York Port', DATE_SUB(CURDATE(),INTERVAL 3 DAY), 'approved', 4, 4),
+(3, 'CD-2024-003', 'Pacific Trade Co',   '["6217.10","6217.90"]',  45000.00, 'USD', 'Japan', 'Chicago O\'Hare',  CURDATE(), 'draft', 4, 4);
+
+-- -------------------------------------------------------
+-- Warehouse Records
+-- -------------------------------------------------------
+INSERT INTO `warehouse_records` (`warehouse_id`, `shipment_id`, `record_type`, `cargo_description`, `quantity`, `unit`, `weight_kg`, `condition_status`, `inspector_id`, `inspection_date`, `notes`) VALUES
+(2, 2, 'arrival',     'Automotive Parts – Pallets 1-20', 20, 'pallet', 8200.00, 'good',    5, DATE_SUB(NOW(), INTERVAL 1 DAY), 'All pallets intact, no damage observed'),
+(2, 2, 'inspection',  'Automotive Parts – Detailed Inspection', 20, 'pallet', 8200.00, 'good', 5, DATE_SUB(NOW(), INTERVAL 12 HOUR), 'Parts match manifest. Cleared for storage.'),
+(1, 1, 'arrival',     'Electronics – Boxes 1-50', 50, 'box', 12500.00, 'pending', 5, NULL, 'Awaiting customs clearance before inspection');
+
+-- -------------------------------------------------------
+-- Transit Records
+-- -------------------------------------------------------
+INSERT INTO `transit_records` (`shipment_id`, `vehicle_no`, `driver_name`, `driver_phone`, `origin_border`, `destination_border`, `departure_time`, `expected_arrival`, `status`, `supervisor_id`, `latitude`, `longitude`) VALUES
+(3, 'TRK-IL-4821', 'Mike Johnson', '+1-555-9001', 'Canadian Border – Niagara', 'Chicago Distribution', DATE_SUB(NOW(), INTERVAL 6 HOUR), DATE_ADD(NOW(), INTERVAL 2 HOUR), 'in_transit', 7, 41.8500, -87.6500),
+(5, 'TRK-WA-1122', 'Sarah Lee',   '+1-555-9002', 'Seattle Port of Entry',    'Seattle Warehouse',    DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'border_entry', 7, 47.6062, -122.3321);

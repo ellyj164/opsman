@@ -12,7 +12,7 @@ let refreshInterval = null;
 document.addEventListener('DOMContentLoaded', () => {
     const user = getStoredUser();
     if (!user) { window.location.href = 'index.html'; return; }
-    if (user.role === 'field_employee') { window.location.href = 'employee-portal.html'; return; }
+    if (user.role === 'field_employee' || user.role === 'field_agent') { window.location.href = 'employee-portal.html'; return; }
 
     document.getElementById('userInfo').textContent = user.username;
 
@@ -48,6 +48,11 @@ function renderStats(stats) {
     document.getElementById('statCompleted').textContent = stats.completed_today ?? '–';
     document.getElementById('statOverdue').textContent   = stats.overdue_tasks   ?? '–';
     document.getElementById('statEmployees').textContent = stats.total_employees ?? '–';
+
+    const statShipments = document.getElementById('statShipments');
+    if (statShipments) statShipments.textContent = stats.active_shipments ?? '–';
+    const statCustoms = document.getElementById('statCustoms');
+    if (statCustoms) statCustoms.textContent = stats.customs_pending ?? '–';
 
     const alertBadge = document.getElementById('alertBadge');
     if (alertBadge) alertBadge.textContent = stats.pending_alerts ?? 0;

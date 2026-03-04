@@ -17,7 +17,7 @@ CREATE TABLE `users` (
     `username`         VARCHAR(50)     NOT NULL,
     `email`            VARCHAR(120)    NOT NULL,
     `password_hash`    VARCHAR(255)    NOT NULL,
-    `role`             ENUM('admin','operations_manager','field_employee') NOT NULL DEFAULT 'field_employee',
+    `role`             ENUM('admin','operations_manager','field_employee','customs_officer','warehouse_officer','field_agent','accountant') NOT NULL DEFAULT 'field_employee',
     `token`            VARCHAR(64)     NULL,
     `token_expires_at` DATETIME        NULL,
     `is_active`        TINYINT(1)      NOT NULL DEFAULT 1,
@@ -67,11 +67,21 @@ CREATE TABLE `shipments` (
     `cargo_type`     VARCHAR(80)   NOT NULL,
     `cargo_weight`   DECIMAL(10,2) NULL,
     `status`         ENUM('pending','in_transit','arrived','cleared','held') NOT NULL DEFAULT 'pending',
+    `client_name`    VARCHAR(120) NULL,
+    `client_email`   VARCHAR(120) NULL,
+    `client_phone`   VARCHAR(30)  NULL,
+    `assigned_to`    INT UNSIGNED NULL,
+    `created_by`     INT UNSIGNED NULL,
+    `notes`          TEXT         NULL,
     `created_at`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_shipments_ref` (`ref_number`),
-    KEY `idx_shipments_status`    (`status`)
+    KEY `idx_shipments_status`    (`status`),
+    KEY `idx_shipments_assigned_to` (`assigned_to`),
+    KEY `idx_shipments_created_by`  (`created_by`),
+    CONSTRAINT `fk_shipments_assigned_to` FOREIGN KEY (`assigned_to`) REFERENCES `employees` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_shipments_created_by`  FOREIGN KEY (`created_by`)  REFERENCES `employees` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
@@ -192,7 +202,11 @@ CREATE TABLE `alerts` (
 DROP TABLE IF EXISTS `documents`;
 CREATE TABLE `documents` (
     `id`             INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-    `task_report_id` INT UNSIGNED  NOT NULL,
+    `task_report_id` INT UNSIGNED  NULL,
+    `customs_id`     INT UNSIGNED  NULL,
+    `shipment_id`    INT UNSIGNED  NULL,
+    `warehouse_record_id` INT UNSIGNED NULL,
+    `transit_id`     INT UNSIGNED  NULL,
     `employee_id`    INT UNSIGNED  NOT NULL,
     `file_name`      VARCHAR(255)  NOT NULL,
     `file_path`      VARCHAR(500)  NOT NULL,
@@ -200,10 +214,135 @@ CREATE TABLE `documents` (
     `file_size`      INT UNSIGNED  NOT NULL,
     `uploaded_at`    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `idx_documents_task_report_id` (`task_report_id`),
-    KEY `idx_documents_employee_id`    (`employee_id`),
-    CONSTRAINT `fk_documents_task_report_id` FOREIGN KEY (`task_report_id`) REFERENCES `task_reports` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_documents_employee_id`    FOREIGN KEY (`employee_id`)    REFERENCES `employees`    (`id`) ON DELETE CASCADE
+    KEY `idx_documents_task_report_id`      (`task_report_id`),
+    KEY `idx_documents_customs_id`          (`customs_id`),
+    KEY `idx_documents_shipment_id`         (`shipment_id`),
+    KEY `idx_documents_warehouse_record_id` (`warehouse_record_id`),
+    KEY `idx_documents_transit_id`          (`transit_id`),
+    KEY `idx_documents_employee_id`         (`employee_id`),
+    CONSTRAINT `fk_documents_task_report_id`      FOREIGN KEY (`task_report_id`)      REFERENCES `task_reports`      (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_documents_customs_id`          FOREIGN KEY (`customs_id`)          REFERENCES `customs_declarations` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_documents_shipment_id`         FOREIGN KEY (`shipment_id`)         REFERENCES `shipments`         (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_documents_warehouse_record_id` FOREIGN KEY (`warehouse_record_id`) REFERENCES `warehouse_records` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_documents_transit_id`          FOREIGN KEY (`transit_id`)          REFERENCES `transit_records`   (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_documents_employee_id`         FOREIGN KEY (`employee_id`)         REFERENCES `employees`         (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------
+-- Table: customs_declarations
+-- -------------------------------------------------------
+DROP TABLE IF EXISTS `customs_declarations`;
+CREATE TABLE `customs_declarations` (
+    `id`              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    `shipment_id`     INT UNSIGNED  NULL,
+    `declaration_no`  VARCHAR(50)   NOT NULL,
+    `declarant_name`  VARCHAR(120)  NOT NULL,
+    `hs_codes`        TEXT          NULL COMMENT 'JSON array of HS codes',
+    `invoice_value`   DECIMAL(15,2) NULL,
+    `currency`        VARCHAR(10)   NOT NULL DEFAULT 'USD',
+    `country_of_origin` VARCHAR(80) NULL,
+    `port_of_entry`   VARCHAR(120)  NULL,
+    `submission_date` DATE          NULL,
+    `clearance_date`  DATE          NULL,
+    `status`          ENUM('draft','submitted','under_review','approved','rejected','cleared') NOT NULL DEFAULT 'draft',
+    `officer_id`      INT UNSIGNED  NULL COMMENT 'Customs officer handling this',
+    `notes`           TEXT          NULL,
+    `created_by`      INT UNSIGNED  NULL,
+    `created_at`      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_customs_declaration_no` (`declaration_no`),
+    KEY `idx_customs_shipment_id`  (`shipment_id`),
+    KEY `idx_customs_status`       (`status`),
+    KEY `idx_customs_officer_id`   (`officer_id`),
+    CONSTRAINT `fk_customs_shipment_id` FOREIGN KEY (`shipment_id`) REFERENCES `shipments` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_customs_officer_id`  FOREIGN KEY (`officer_id`)  REFERENCES `employees` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_customs_created_by`  FOREIGN KEY (`created_by`)  REFERENCES `employees` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------
+-- Table: warehouses
+-- -------------------------------------------------------
+DROP TABLE IF EXISTS `warehouses`;
+CREATE TABLE `warehouses` (
+    `id`           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name`         VARCHAR(120) NOT NULL,
+    `code`         VARCHAR(20)  NOT NULL,
+    `address`      TEXT         NULL,
+    `city`         VARCHAR(80)  NULL,
+    `country`      VARCHAR(80)  NULL,
+    `latitude`     DECIMAL(10,7) NULL,
+    `longitude`    DECIMAL(10,7) NULL,
+    `capacity_sqm` DECIMAL(10,2) NULL,
+    `manager_id`   INT UNSIGNED NULL COMMENT 'Employee who manages warehouse',
+    `status`       ENUM('active','inactive','maintenance') NOT NULL DEFAULT 'active',
+    `created_at`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_warehouses_code` (`code`),
+    KEY `idx_warehouses_status` (`status`),
+    CONSTRAINT `fk_warehouses_manager_id` FOREIGN KEY (`manager_id`) REFERENCES `employees` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------
+-- Table: warehouse_records
+-- -------------------------------------------------------
+DROP TABLE IF EXISTS `warehouse_records`;
+CREATE TABLE `warehouse_records` (
+    `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `warehouse_id`    INT UNSIGNED NOT NULL,
+    `shipment_id`     INT UNSIGNED NULL,
+    `record_type`     ENUM('arrival','inspection','storage','dispatch') NOT NULL DEFAULT 'arrival',
+    `cargo_description` TEXT       NULL,
+    `quantity`        INT          NULL,
+    `unit`            VARCHAR(20)  NULL,
+    `weight_kg`       DECIMAL(10,2) NULL,
+    `condition_status` ENUM('good','damaged','partial','pending') NOT NULL DEFAULT 'pending',
+    `inspector_id`    INT UNSIGNED NULL,
+    `inspection_date` DATETIME     NULL,
+    `notes`           TEXT         NULL,
+    `created_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_wh_records_warehouse_id` (`warehouse_id`),
+    KEY `idx_wh_records_shipment_id`  (`shipment_id`),
+    KEY `idx_wh_records_type`         (`record_type`),
+    CONSTRAINT `fk_wh_records_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses`  (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_wh_records_shipment_id`  FOREIGN KEY (`shipment_id`)  REFERENCES `shipments`   (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_wh_records_inspector_id` FOREIGN KEY (`inspector_id`) REFERENCES `employees`   (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------
+-- Table: transit_records
+-- -------------------------------------------------------
+DROP TABLE IF EXISTS `transit_records`;
+CREATE TABLE `transit_records` (
+    `id`               INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    `shipment_id`      INT UNSIGNED  NULL,
+    `vehicle_no`       VARCHAR(30)   NOT NULL,
+    `driver_name`      VARCHAR(120)  NULL,
+    `driver_phone`     VARCHAR(30)   NULL,
+    `origin_border`    VARCHAR(120)  NULL,
+    `destination_border` VARCHAR(120) NULL,
+    `departure_time`   DATETIME      NULL,
+    `expected_arrival` DATETIME      NULL,
+    `actual_arrival`   DATETIME      NULL,
+    `border_entry_time`  DATETIME    NULL,
+    `border_exit_time`   DATETIME    NULL,
+    `status`           ENUM('scheduled','in_transit','border_entry','border_clearance','completed','delayed','stopped') NOT NULL DEFAULT 'scheduled',
+    `delay_reason`     TEXT          NULL,
+    `supervisor_id`    INT UNSIGNED  NULL COMMENT 'Field agent supervising this transit',
+    `latitude`         DECIMAL(10,7) NULL COMMENT 'Last known location',
+    `longitude`        DECIMAL(10,7) NULL,
+    `notes`            TEXT          NULL,
+    `created_at`       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_transit_shipment_id`   (`shipment_id`),
+    KEY `idx_transit_status`        (`status`),
+    KEY `idx_transit_supervisor_id` (`supervisor_id`),
+    CONSTRAINT `fk_transit_shipment_id`   FOREIGN KEY (`shipment_id`)   REFERENCES `shipments`  (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_transit_supervisor_id` FOREIGN KEY (`supervisor_id`) REFERENCES `employees`  (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

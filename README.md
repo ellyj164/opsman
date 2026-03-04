@@ -1,78 +1,86 @@
-# OpsMan – Field Operations Management System
+# OpsMan – Logistics Operations Management System
 
-A full-stack Field Operations Management System for managing customs, logistics, and border operations teams.
+> Complete logistics management system for shipments, customs, warehouse, field operations, and transit tracking.
+
+---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         OpsMan System                           │
-├─────────────────┬──────────────────────────┬────────────────────┤
-│   Frontend      │    PHP Backend (API)      │  Python AI Service │
-│   (HTML/CSS/JS) │    Apache + PDO + MySQL   │  Flask + scikit-   │
-│                 │                           │  learn (port 5001) │
-│  - Dashboard    │  /api/auth.php            │                    │
-│  - Tasks        │  /api/employees.php       │  /api/predict-delay│
-│  - Reports      │  /api/tasks.php           │  /api/bottlenecks  │
-│  - Analytics    │  /api/reports.php         │  /api/performance- │
-│  - Employees    │  /api/gps.php             │    insights        │
-│  - Alerts       │  /api/dashboard.php       │  /api/employee-    │
-│  - Employee     │  /api/analytics.php       │    score           │
-│    Portal       │  /api/alerts.php          │                    │
-│                 │  /api/uploads.php         │                    │
-└─────────────────┴──────────────────────────┴────────────────────┘
-                            │
-                     MySQL Database
-                       (opsman)
+opsman/
+├── frontend/          # HTML5 + Vanilla JS single-page-like UI
+│   ├── css/           # Shared stylesheet
+│   └── js/            # Page-specific JS modules + app.js (shared)
+├── backend/
+│   ├── api/           # PHP REST endpoints
+│   ├── config/        # DB connection & app config
+│   ├── middleware/     # Auth (Bearer token) middleware
+│   ├── models/        # PDO-based data models
+│   └── utils/         # Response & Validator helpers
+├── database/
+│   ├── schema.sql     # Full MySQL schema
+│   └── seed.sql       # Demo data with all user roles
+└── ai-service/        # Python Flask ML micro-service
+    ├── app.py
+    ├── models/        # delay_predictor, performance_analyzer
+    └── utils/
 ```
+
+---
+
+## Roles
+
+| Role               | Description                                      |
+|--------------------|--------------------------------------------------|
+| admin              | Full access to all modules                       |
+| operations_manager | Full access except destructive deletes           |
+| customs_officer    | Manages customs declarations                     |
+| warehouse_officer  | Manages warehouse records and inventory          |
+| field_employee     | Submits task reports, GPS check-in/out           |
+| field_agent        | Cross-border transit supervision                 |
+| accountant         | Financial/accounting read access                 |
+
+---
 
 ## Prerequisites
 
-- PHP 8.1+ with PDO MySQL extension
-- MySQL 5.7+ or MariaDB 10.3+
-- Apache 2.4+ with mod_rewrite enabled
+- PHP 8.1+
+- MySQL 5.7+ (or MariaDB 10.5+)
+- Apache 2.4+ with `mod_rewrite`
 - Python 3.9+ (for AI service)
-- A modern web browser
+- Composer (optional)
+
+---
 
 ## Installation
 
-### 1. Clone / place the repository
+### 1. Clone the repository
 
 ```bash
-git clone <repo-url> /var/www/html/opsman
+git clone https://github.com/your-org/opsman.git
+cd opsman
 ```
 
-### 2. Database Setup
+### 2. Database setup
 
 ```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p < database/seed.sql
+mysql -u root -p << 'SQL'
+CREATE DATABASE IF NOT EXISTS opsman CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+SQL
+
+mysql -u root -p opsman < database/schema.sql
+mysql -u root -p opsman < database/seed.sql
 ```
 
-### 3. Configure Backend
+### 3. Backend configuration
 
-Edit `backend/config/database.php` to match your MySQL credentials:
+Edit `backend/config/config.php` and `backend/config/database.php` with your DB credentials.
 
-```php
-private $host     = 'localhost';
-private $db_name  = 'opsman';
-private $username = 'your_mysql_user';
-private $password = 'your_mysql_password';
-```
-
-Edit `backend/config/config.php` for application settings:
-
-```php
-define('AI_SERVICE_URL', 'http://localhost:5001');
-define('UPLOAD_DIR', __DIR__ . '/../../uploads/');
-```
-
-### 4. Create Upload Directory
+### 4. Upload directory
 
 ```bash
-mkdir -p /var/www/html/opsman/uploads
-chmod 755 /var/www/html/opsman/uploads
-chown www-data:www-data /var/www/html/opsman/uploads
+mkdir -p backend/uploads
+chmod 775 backend/uploads
 ```
 
 ### 5. Apache Virtual Host
@@ -80,169 +88,164 @@ chown www-data:www-data /var/www/html/opsman/uploads
 ```apache
 <VirtualHost *:80>
     ServerName opsman.local
-    DocumentRoot /var/www/html/opsman/frontend
-    
-    Alias /api /var/www/html/opsman/backend/api
-    Alias /uploads /var/www/html/opsman/uploads
-    
-    <Directory /var/www/html/opsman/backend>
+    DocumentRoot /var/www/opsman/frontend
+
+    Alias /api /var/www/opsman/backend/api
+
+    <Directory /var/www/opsman/backend/api>
+        Options -Indexes
         AllowOverride All
         Require all granted
     </Directory>
-    
-    <Directory /var/www/html/opsman/frontend>
-        AllowOverride None
+
+    <Directory /var/www/opsman/frontend>
+        Options -Indexes
+        AllowOverride All
         Require all granted
     </Directory>
 </VirtualHost>
 ```
 
-### 6. Python AI Service
+Enable and restart:
 
 ```bash
-cd ai-service
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Optional: create .env file
-echo "DB_HOST=localhost" > .env
-echo "DB_NAME=opsman" >> .env
-echo "DB_USER=root" >> .env
-echo "DB_PASSWORD=" >> .env
-
-python app.py
+a2enmod rewrite
+a2ensite opsman
+systemctl restart apache2
 ```
 
-The AI service starts on **port 5001**.
+### 6. AI Service (optional)
 
-### 7. Frontend API Base URL
-
-In `frontend/js/app.js`, update `API_BASE_URL` if needed:
-
-```js
-const API_BASE_URL = '/api';   // adjust if hosted differently
+```bash
+pip3 install -r ai-service/requirements.txt
+python3 ai-service/app.py &
 ```
+
+Or use a systemd service file.
+
+---
+
+## Modules
+
+| Module       | Frontend Page      | API Endpoint            |
+|--------------|--------------------|-------------------------|
+| Auth         | index.html         | /api/auth.php           |
+| Dashboard    | dashboard.html     | /api/dashboard.php      |
+| Shipments    | shipments.html     | /api/shipments.php      |
+| Customs      | customs.html       | /api/customs.php        |
+| Warehouses   | warehouses.html    | /api/warehouses.php     |
+| Transit      | transit.html       | /api/transit.php        |
+| Tasks        | tasks.html         | /api/tasks.php          |
+| Employees    | employees.html     | /api/employees.php      |
+| Reports      | reports.html       | /api/reports.php        |
+| Analytics    | analytics.html     | /api/analytics.php      |
+| Alerts       | alerts.html        | /api/alerts.php         |
+| GPS          | employee-portal    | /api/gps.php            |
+| Uploads      | —                  | /api/uploads.php        |
+
+---
+
+## API Endpoints
+
+### Auth (`/api/auth.php`)
+| Method | Params         | Description       |
+|--------|----------------|-------------------|
+| POST   | action=login   | Login             |
+| POST   | action=logout  | Logout            |
+| GET    | action=me      | Get current user  |
+
+### Shipments (`/api/shipments.php`)
+| Method | Params                   | Description             |
+|--------|--------------------------|-------------------------|
+| GET    | page, per_page, status, search | List shipments    |
+| GET    | id=X                     | Get single shipment     |
+| POST   |                          | Create (manager/admin)  |
+| PUT    | id=X                     | Update (manager/admin)  |
+| DELETE | id=X                     | Delete (admin only)     |
+
+### Customs (`/api/customs.php`)
+| Method | Params                   | Description              |
+|--------|--------------------------|--------------------------|
+| GET    | page, per_page, status, search | List declarations  |
+| GET    | id=X                     | Get single declaration   |
+| POST   |                          | Create (customs+)        |
+| PUT    | id=X                     | Update                   |
+| PUT    | id=X&action=update-status | Status update only      |
+| DELETE | id=X                     | Delete (admin only)      |
+
+### Warehouses (`/api/warehouses.php`)
+| Method | Params                           | Description              |
+|--------|----------------------------------|--------------------------|
+| GET    | page, per_page, status, search   | List warehouses          |
+| GET    | id=X                             | Get single warehouse     |
+| GET    | action=records&warehouse_id=X    | Get warehouse records    |
+| POST   |                                  | Create warehouse (mgr+)  |
+| POST   | action=record                    | Add warehouse record     |
+| PUT    | id=X                             | Update warehouse         |
+| DELETE | id=X                             | Delete (admin only)      |
+
+### Transit (`/api/transit.php`)
+| Method | Params                    | Description             |
+|--------|---------------------------|-------------------------|
+| GET    | page, per_page, status, search | List transit records |
+| GET    | id=X                      | Get single record       |
+| POST   |                           | Create (mgr/agent/admin)|
+| PUT    | id=X                      | Update                  |
+| PUT    | id=X&action=update-status | Status + location update|
+| DELETE | id=X                      | Delete (admin only)     |
+
+### Tasks (`/api/tasks.php`)
+| Method | Params     | Description             |
+|--------|------------|-------------------------|
+| GET    | filters    | List tasks              |
+| GET    | id=X       | Get single task         |
+| POST   |            | Create (manager/admin)  |
+| PUT    | id=X       | Update                  |
+| DELETE | id=X       | Delete (admin only)     |
+
+### Dashboard (`/api/dashboard.php`)
+| Method | Params                   | Description              |
+|--------|--------------------------|--------------------------|
+| GET    |                          | Dashboard summary        |
+| GET    | action=stats             | Detailed statistics      |
+| GET    | action=employee-locations | GPS map data            |
 
 ---
 
 ## Default Test Credentials
 
-| Role               | Username    | Password       |
-|--------------------|-------------|----------------|
-| Admin              | `admin`     | `Admin@123`    |
-| Operations Manager | `manager1`  | `Manager@123`  |
-| Field Employee     | `employee1` | `Employee@123` |
+| Username      | Password      | Role               |
+|---------------|---------------|--------------------|
+| admin         | Admin@123     | admin              |
+| manager1      | Manager@123   | operations_manager |
+| employee1     | Employee@123  | field_employee     |
+| customs1      | Admin@123     | customs_officer    |
+| warehouse1    | Admin@123     | warehouse_officer  |
+| accountant1   | Admin@123     | accountant         |
+| agent1        | Admin@123     | field_agent        |
 
 ---
 
-## API Reference
+## VPS / Public Deployment
 
-### Authentication
-
-| Method | Endpoint                           | Description           |
-|--------|------------------------------------|-----------------------|
-| POST   | `/api/auth.php?action=login`       | Login, returns token  |
-| POST   | `/api/auth.php?action=logout`      | Invalidate token      |
-| GET    | `/api/auth.php?action=me`          | Get current user      |
-| PUT    | `/api/auth.php?action=change-password` | Change password   |
-
-All other endpoints require `Authorization: Bearer <token>`.
-
-### Employees
-
-| Method | Endpoint                    | Description              |
-|--------|-----------------------------|--------------------------|
-| GET    | `/api/employees.php`        | List employees           |
-| GET    | `/api/employees.php?id=X`   | Get employee             |
-| POST   | `/api/employees.php`        | Create employee + user   |
-| PUT    | `/api/employees.php?id=X`   | Update employee          |
-| DELETE | `/api/employees.php?id=X`   | Delete employee (admin)  |
-
-### Tasks
-
-| Method | Endpoint                                      | Description       |
-|--------|-----------------------------------------------|-------------------|
-| GET    | `/api/tasks.php`                              | List tasks        |
-| GET    | `/api/tasks.php?id=X`                         | Get task          |
-| POST   | `/api/tasks.php`                              | Create task       |
-| PUT    | `/api/tasks.php?id=X`                         | Update task       |
-| PUT    | `/api/tasks.php?id=X&action=update-status`    | Update status     |
-| DELETE | `/api/tasks.php?id=X`                         | Delete task       |
-
-### Reports
-
-| Method | Endpoint                             | Description    |
-|--------|--------------------------------------|----------------|
-| GET    | `/api/reports.php`                   | List reports   |
-| GET    | `/api/reports.php?id=X`              | Get report     |
-| POST   | `/api/reports.php`                   | Create report  |
-| PUT    | `/api/reports.php?id=X`              | Update report  |
-| POST   | `/api/reports.php?action=checkin`    | Check in       |
-| POST   | `/api/reports.php?action=checkout`   | Check out      |
-
-### GPS
-
-| Method | Endpoint                              | Description                |
-|--------|---------------------------------------|----------------------------|
-| POST   | `/api/gps.php`                        | Log coordinates            |
-| GET    | `/api/gps.php?employee_id=X`          | Employee location history  |
-| GET    | `/api/gps.php?task_id=X`              | GPS trail for task         |
-| GET    | `/api/gps.php?action=current`         | All active employee locs   |
-
-### Dashboard
-
-| Method | Endpoint                                       | Description          |
-|--------|------------------------------------------------|----------------------|
-| GET    | `/api/dashboard.php`                           | Dashboard summary    |
-| GET    | `/api/dashboard.php?action=stats`              | Detailed stats       |
-| GET    | `/api/dashboard.php?action=employee-locations` | Map data             |
-
-### Analytics
-
-| Method | Endpoint                                         | Description           |
-|--------|--------------------------------------------------|-----------------------|
-| GET    | `/api/analytics.php?action=performance`          | Employee stats        |
-| GET    | `/api/analytics.php?action=delays`               | Delay analysis        |
-| GET    | `/api/analytics.php?action=bottlenecks`          | AI bottleneck report  |
-| GET    | `/api/analytics.php?action=predict-delay`        | AI delay prediction   |
-| GET    | `/api/analytics.php?action=employee-score`       | AI employee scores    |
-
-### Alerts
-
-| Method | Endpoint                              | Description         |
-|--------|---------------------------------------|---------------------|
-| GET    | `/api/alerts.php`                     | List alerts         |
-| GET    | `/api/alerts.php?id=X`                | Get alert           |
-| PUT    | `/api/alerts.php?id=X&action=read`    | Mark as read        |
-| PUT    | `/api/alerts.php?action=read-all`     | Mark all as read    |
-| DELETE | `/api/alerts.php?id=X`                | Delete alert        |
-
-### Uploads
-
-| Method | Endpoint                          | Description             |
-|--------|-----------------------------------|-------------------------|
-| POST   | `/api/uploads.php`                | Upload file             |
-| GET    | `/api/uploads.php?report_id=X`    | List files for report   |
-
----
-
-## Security Features
-
-- **PDO prepared statements** for all SQL queries
-- **bcrypt** password hashing (`password_hash`/`password_verify`)
-- **Bearer token** authentication with expiry
-- **Input validation** on all endpoints (server-side + client-side)
-- **File upload validation** (type, MIME, size)
-- **CORS headers** on all API endpoints
-- **Activity logging** for audit trails
-
----
-
-## Screenshots
-
-_Add screenshots here after setup._
-
-| Dashboard | Tasks | Analytics |
-|-----------|-------|-----------|
-| ![Dashboard](assets/screenshots/dashboard.png) | ![Tasks](assets/screenshots/tasks.png) | ![Analytics](assets/screenshots/analytics.png) |
+1. **Document Root**: Point Apache `DocumentRoot` to `frontend/` OR place the `opsman/` directory under `public_html/`.
+2. **Backend path**: Backend runs at `public_html/opsman/backend/api/`.
+3. **API Base URL**: Update `API_BASE_URL` in `frontend/js/app.js` to your actual domain, e.g.:
+   ```js
+   const API_BASE_URL = 'https://yourdomain.com/opsman/backend/api';
+   ```
+4. **Uploads directory**: Ensure `backend/uploads/` has write permissions:
+   ```bash
+   chmod 775 backend/uploads
+   chown www-data:www-data backend/uploads
+   ```
+5. **mod_rewrite**: Enable and restart:
+   ```bash
+   a2enmod rewrite && systemctl restart apache2
+   ```
+6. **AI service**: Run as a background process or systemd service:
+   ```bash
+   python3 ai-service/app.py
+   # or
+   nohup python3 ai-service/app.py > /var/log/opsman-ai.log 2>&1 &
+   ```

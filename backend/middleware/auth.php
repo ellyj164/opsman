@@ -78,3 +78,30 @@ function requireFieldEmployee(array $user): void {
         Response::error('Authentication required', 401);
     }
 }
+
+/**
+ * Require the authenticated user to be a customs_officer (or admin/manager).
+ */
+function requireCustomsOfficer(array $user): void {
+    if (!in_array($user['role'], ['admin', 'operations_manager', 'customs_officer'], true)) {
+        Response::error('Customs Officer access required', 403);
+    }
+}
+
+/**
+ * Require the authenticated user to be a warehouse_officer (or admin/manager).
+ */
+function requireWarehouseOfficer(array $user): void {
+    if (!in_array($user['role'], ['admin', 'operations_manager', 'warehouse_officer'], true)) {
+        Response::error('Warehouse Officer access required', 403);
+    }
+}
+
+/**
+ * Require the authenticated user to be an accountant (or admin).
+ */
+function requireAccountant(array $user): void {
+    if (!in_array($user['role'], ['admin', 'accountant'], true)) {
+        Response::error('Accountant access required', 403);
+    }
+}

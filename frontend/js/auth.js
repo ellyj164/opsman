@@ -66,7 +66,7 @@ async function handleLogin(e) {
 }
 
 function redirectByRole(role) {
-    if (role === 'field_employee') {
+    if (role === 'field_employee' || role === 'field_agent') {
         window.location.href = 'employee-portal.html';
     } else {
         window.location.href = 'dashboard.html';
