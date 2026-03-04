@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMan – Transit Tracking</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body class="app-page">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo"><span class="logo-icon">⚙️</span><span class="logo-text">OpsMan</span></div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html"  class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="shipments.html"  class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
+            <a href="customs.html"    class="nav-item"><span class="nav-icon">🛃</span> Customs</a>
+            <a href="warehouses.html" class="nav-item"><span class="nav-icon">🏭</span> Warehouses</a>
+            <a href="transit.html"    class="nav-item active"><span class="nav-icon">🚛</span> Transit</a>
+            <a href="tasks.html"      class="nav-item"><span class="nav-icon">✅</span> Tasks</a>
+            <a href="employees.html"  class="nav-item"><span class="nav-icon">👥</span> Employees</a>
+            <a href="reports.html"    class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+            <a href="analytics.html"  class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="alerts.html"     class="nav-item"><span class="nav-icon">🔔</span> Alerts</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 class="page-title">Transit Tracking</h2>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ New Transit</button>
+        </header>
+
+        <!-- Map -->
+        <div class="card card-map" style="margin-bottom:1.5rem">
+            <div class="card-header">
+                <h3>Active Transit Map</h3>
+                <button class="btn btn-sm btn-outline" onclick="refreshMap()">↺ Refresh</button>
+            </div>
+            <div id="transitMap" style="height:350px;border-radius:0 0 8px 8px"></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar card">
+            <div class="filter-group">
+                <select id="filterStatus" class="form-control form-control-sm" onchange="applyFilters()">
+                    <option value="">All Statuses</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="border_entry">Border Entry</option>
+                    <option value="border_clearance">Border Clearance</option>
+                    <option value="completed">Completed</option>
+                    <option value="delayed">Delayed</option>
+                    <option value="stopped">Stopped</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <input type="text" id="filterSearch" class="form-control form-control-sm"
+                       placeholder="Search vehicle or driver…" oninput="applyFilters()">
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover" id="transitTable">
+                    <thead>
+                        <tr>
+                            <th>Vehicle #</th>
+                            <th>Driver</th>
+                            <th>Shipment Ref</th>
+                            <th>Route</th>
+                            <th>Departure</th>
+                            <th>Expected Arrival</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transitBody">
+                        <tr><td colspan="8" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination-bar" id="paginationBar"></div>
+        </div>
+    </main>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal-overlay hidden" id="formModal">
+        <div class="modal" style="max-width:650px">
+            <div class="modal-header">
+                <h3 id="formModalTitle">New Transit Record</h3>
+                <button class="modal-close" onclick="closeModal('formModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="transitForm" onsubmit="handleFormSubmit(event)">
+                    <input type="hidden" id="transitId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Vehicle No *</label>
+                            <input type="text" id="fVehicleNo" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="fStatus" class="form-control">
+                                <option value="scheduled">Scheduled</option>
+                                <option value="in_transit">In Transit</option>
+                                <option value="border_entry">Border Entry</option>
+                                <option value="border_clearance">Border Clearance</option>
+                                <option value="completed">Completed</option>
+                                <option value="delayed">Delayed</option>
+                                <option value="stopped">Stopped</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Driver Name</label>
+                            <input type="text" id="fDriverName" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Driver Phone</label>
+                            <input type="text" id="fDriverPhone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Origin Border</label>
+                            <input type="text" id="fOriginBorder" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Destination Border</label>
+                            <input type="text" id="fDestinationBorder" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Departure Time</label>
+                            <input type="datetime-local" id="fDepartureTime" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Arrival</label>
+                            <input type="datetime-local" id="fExpectedArrival" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="number" id="fLatitude" class="form-control" step="0.0000001">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="number" id="fLongitude" class="form-control" step="0.0000001">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Shipment ID</label>
+                        <input type="number" id="fShipmentId" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="fNotes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('formModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div class="modal-overlay hidden" id="statusModal">
+        <div class="modal" style="max-width:450px">
+            <div class="modal-header">
+                <h3>Update Transit Status</h3>
+                <button class="modal-close" onclick="closeModal('statusModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm" onsubmit="handleStatusSubmit(event)">
+                    <input type="hidden" id="sTransitId">
+                    <div class="form-group">
+                        <label>New Status</label>
+                        <select id="sStatus" class="form-control">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="in_transit">In Transit</option>
+                            <option value="border_entry">Border Entry</option>
+                            <option value="border_clearance">Border Clearance</option>
+                            <option value="completed">Completed</option>
+                            <option value="delayed">Delayed</option>
+                            <option value="stopped">Stopped</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Current Latitude</label>
+                            <input type="number" id="sLatitude" class="form-control" step="0.0000001">
+                        </div>
+                        <div class="form-group">
+                            <label>Current Longitude</label>
+                            <input type="number" id="sLongitude" class="form-control" step="0.0000001">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('statusModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/transit.js"></script>
+</body>
+</html>

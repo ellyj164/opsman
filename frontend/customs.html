@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMan – Customs Declarations</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo"><span class="logo-icon">⚙️</span><span class="logo-text">OpsMan</span></div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html"  class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="shipments.html"  class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
+            <a href="customs.html"    class="nav-item active"><span class="nav-icon">🛃</span> Customs</a>
+            <a href="warehouses.html" class="nav-item"><span class="nav-icon">🏭</span> Warehouses</a>
+            <a href="transit.html"    class="nav-item"><span class="nav-icon">🚛</span> Transit</a>
+            <a href="tasks.html"      class="nav-item"><span class="nav-icon">✅</span> Tasks</a>
+            <a href="employees.html"  class="nav-item"><span class="nav-icon">👥</span> Employees</a>
+            <a href="reports.html"    class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+            <a href="analytics.html"  class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="alerts.html"     class="nav-item"><span class="nav-icon">🔔</span> Alerts</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 class="page-title">Customs Declarations</h2>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ New Declaration</button>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters-bar card">
+            <div class="filter-group">
+                <select id="filterStatus" class="form-control form-control-sm" onchange="applyFilters()">
+                    <option value="">All Statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="cleared">Cleared</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <input type="text" id="filterSearch" class="form-control form-control-sm"
+                       placeholder="Search declarations…" oninput="applyFilters()">
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover" id="customsTable">
+                    <thead>
+                        <tr>
+                            <th>Declaration #</th>
+                            <th>Declarant</th>
+                            <th>Shipment Ref</th>
+                            <th>Invoice Value</th>
+                            <th>Country of Origin</th>
+                            <th>Port of Entry</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customsBody">
+                        <tr><td colspan="8" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination-bar" id="paginationBar"></div>
+        </div>
+    </main>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal-overlay hidden" id="formModal">
+        <div class="modal" style="max-width:650px">
+            <div class="modal-header">
+                <h3 id="formModalTitle">New Declaration</h3>
+                <button class="modal-close" onclick="closeModal('formModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="customsForm" onsubmit="handleFormSubmit(event)">
+                    <input type="hidden" id="declarationId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Declaration No *</label>
+                            <input type="text" id="fDeclarationNo" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="fStatus" class="form-control">
+                                <option value="draft">Draft</option>
+                                <option value="submitted">Submitted</option>
+                                <option value="under_review">Under Review</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="cleared">Cleared</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Declarant Name *</label>
+                        <input type="text" id="fDeclarantName" class="form-control" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Invoice Value</label>
+                            <input type="number" id="fInvoiceValue" class="form-control" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Currency</label>
+                            <input type="text" id="fCurrency" class="form-control" value="USD" maxlength="10">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Country of Origin</label>
+                            <input type="text" id="fCountryOfOrigin" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Port of Entry</label>
+                            <input type="text" id="fPortOfEntry" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Submission Date</label>
+                            <input type="date" id="fSubmissionDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Shipment ID</label>
+                            <input type="number" id="fShipmentId" class="form-control" placeholder="Shipment ID">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>HS Codes (JSON array)</label>
+                        <textarea id="fHsCodes" class="form-control" rows="2" placeholder='["8471.30","8517.12"]'></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="fNotes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('formModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="js/app.js"></script>
+    <script src="js/customs.js"></script>
+</body>
+</html>

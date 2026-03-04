@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMan – Analytics</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo"><span class="logo-icon">⚙️</span><span class="logo-text">OpsMan</span></div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="shipments.html"  class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
+            <a href="customs.html"    class="nav-item"><span class="nav-icon">🛃</span> Customs</a>
+            <a href="warehouses.html" class="nav-item"><span class="nav-icon">🏭</span> Warehouses</a>
+            <a href="transit.html"    class="nav-item"><span class="nav-icon">🚛</span> Transit</a>
+            <a href="tasks.html"      class="nav-item"><span class="nav-icon">✅</span> Tasks</a>
+            <a href="employees.html"  class="nav-item"><span class="nav-icon">👥</span> Employees</a>
+            <a href="reports.html"    class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+            <a href="analytics.html" class="nav-item active"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="alerts.html"    class="nav-item"><span class="nav-icon">🔔</span> Alerts</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 class="page-title">Analytics</h2>
+            <button class="btn btn-outline btn-sm" onclick="loadAllAnalytics()">↺ Refresh</button>
+        </header>
+
+        <!-- Charts row -->
+        <div class="analytics-grid">
+            <div class="card">
+                <div class="card-header"><h3>Task Completion by Employee</h3></div>
+                <div class="chart-wrapper"><canvas id="perfChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3>Delay Rate by Task Type</h3></div>
+                <div class="chart-wrapper"><canvas id="delayChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Employee Performance Table -->
+        <div class="card">
+            <div class="card-header"><h3>Employee Performance</h3></div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Dept</th>
+                            <th>Total</th>
+                            <th>Completed</th>
+                            <th>Overdue</th>
+                            <th>Completion %</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="perfTableBody">
+                        <tr><td colspan="7" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="card ai-card">
+            <div class="card-header">
+                <h3>🤖 AI-Powered Insights</h3>
+                <span class="badge badge-info">Powered by ML</span>
+            </div>
+            <div id="aiInsights" class="ai-insights">
+                <div class="loading-spinner">Connecting to AI service…</div>
+            </div>
+        </div>
+
+        <!-- Bottlenecks -->
+        <div class="card">
+            <div class="card-header"><h3>Operational Bottlenecks</h3></div>
+            <div id="bottlenecksList" class="bottlenecks-list">
+                <div class="loading-spinner">Loading…</div>
+            </div>
+        </div>
+
+        <!-- Delay Prediction Tool -->
+        <div class="card">
+            <div class="card-header"><h3>🔮 Delay Prediction Tool</h3></div>
+            <div class="predict-form">
+                <div class="form-row">
+                    <div class="form-group col-3">
+                        <label class="form-label">Task Type</label>
+                        <select id="predTaskType" class="form-control">
+                            <option value="customs_declaration">Customs Declaration</option>
+                            <option value="warehouse_inspection">Warehouse Inspection</option>
+                            <option value="border_transit_supervision">Border Transit</option>
+                            <option value="cargo_inspection">Cargo Inspection</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-3">
+                        <label class="form-label">Priority</label>
+                        <select id="predPriority" class="form-control">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-3">
+                        <label class="form-label">Days Until Deadline</label>
+                        <input type="number" id="predDays" class="form-control" value="3" min="0">
+                    </div>
+                    <div class="form-group col-3">
+                        <label class="form-label">Employee Score</label>
+                        <input type="number" id="predScore" class="form-control" value="80" min="0" max="100">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="predictDelay()">Predict</button>
+                <div id="predictionResult" class="prediction-result hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/analytics.js"></script>
+</body>
+</html>

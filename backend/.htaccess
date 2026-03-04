@@ -1,0 +1,39 @@
+# OpsMan – Apache Configuration
+# Enables mod_rewrite, sets CORS headers, and secures the backend.
+
+Options -Indexes
+DirectoryIndex index.php
+
+# ── CORS pre-flight support ───────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Max-Age "3600"
+</IfModule>
+
+# Handle OPTIONS pre-flight without going to PHP
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=204,L]
+
+# ── Security headers ─────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Deny access to config files
+<FilesMatch "\.(sql|env|log|sh|md)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# PHP settings
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_value upload_max_filesize 12M
+    php_value post_max_size 12M
+    php_value max_execution_time 60
+</IfModule>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMan – Employee Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page mobile-app">
+
+    <!-- Top Bar -->
+    <header class="mobile-header">
+        <h1 class="mobile-title">⚙️ OpsMan</h1>
+        <div class="mobile-user" id="mobileUser"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-main">
+
+        <!-- My Tasks Section -->
+        <section id="sectionTasks" class="mobile-section active">
+            <div class="section-header">
+                <h2>My Tasks</h2>
+                <span class="badge badge-primary" id="taskCount">0</span>
+            </div>
+
+            <div id="myTasksList" class="task-cards">
+                <div class="loading-spinner">Loading…</div>
+            </div>
+        </section>
+
+        <!-- Check-In/Out Section -->
+        <section id="sectionCheckin" class="mobile-section">
+            <div class="section-header"><h2>Check In / Out</h2></div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label class="form-label">Select Task</label>
+                    <select id="checkinTaskSelect" class="form-control">
+                        <option value="">Loading tasks…</option>
+                    </select>
+                </div>
+
+                <div class="location-display" id="locationDisplay">
+                    <span class="text-muted">📍 Location not captured yet</span>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-success btn-block" onclick="doCheckIn()">
+                        📍 Check In
+                    </button>
+                    <button class="btn btn-danger btn-block" onclick="doCheckOut()">
+                        🏁 Check Out
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>GPS Status</h3></div>
+                <div id="gpsStatus" class="gps-status">
+                    <div class="gps-dot gps-inactive"></div>
+                    <span>GPS inactive</span>
+                </div>
+                <button class="btn btn-sm btn-outline mt-2" onclick="startGPS()">
+                    🛰 Start GPS Tracking
+                </button>
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="sectionReports" class="mobile-section">
+            <div class="section-header">
+                <h2>Submit Report</h2>
+            </div>
+
+            <form id="reportForm" class="card" novalidate>
+                <div class="form-group">
+                    <label class="form-label">Task *</label>
+                    <select id="reportTaskSelect" class="form-control" required>
+                        <option value="">Select a task</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="reportNotes" class="form-control" rows="3"
+                              placeholder="Field observations…"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Observations</label>
+                    <textarea id="reportObservations" class="form-control" rows="3"
+                              placeholder="Detailed observations…"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Attach Photo / Document</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx" multiple
+                               onchange="handleFileSelect(event)">
+                        <div class="file-upload-label" onclick="document.getElementById('fileInput').click()">
+                            📎 Tap to attach files or take photo
+                        </div>
+                        <div id="filePreview" class="file-preview"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    📤 Submit Report
+                </button>
+            </form>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="bottom-nav-item active" onclick="showSection('Tasks', this)">
+            <span class="nav-icon">✅</span>
+            <span>My Tasks</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="showSection('Checkin', this)">
+            <span class="nav-icon">📍</span>
+            <span>Check In</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="showSection('Reports', this)">
+            <span class="nav-icon">📋</span>
+            <span>Reports</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="logout()">
+            <span class="nav-icon">🚪</span>
+            <span>Logout</span>
+        </a>
+    </nav>
+
+    <!-- Task Detail Modal -->
+    <div class="modal-overlay hidden" id="taskDetailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="taskDetailTitle">Task Details</h3>
+                <button class="modal-close" onclick="closeModal('taskDetailModal')">✕</button>
+            </div>
+            <div class="modal-body" id="taskDetailBody"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="js/app.js"></script>
+    <script src="js/gps.js"></script>
+    <script src="js/uploads.js"></script>
+    <script src="js/tasks.js"></script>
+
+    <script>
+        let currentReportId = null;
+        let currentLat = null;
+        let currentLng = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuthEmployee();
+            loadMyTasks();
+            loadMyTasksForSelect();
+        });
+
+        function showSection(name, el) {
+            document.querySelectorAll('.mobile-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('section' + name).classList.add('active');
+            if (el) el.classList.add('active');
+        }
+
+        function checkAuthEmployee() {
+            const user = getStoredUser();
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            document.getElementById('mobileUser').textContent = user.username;
+        }
+
+        async function doCheckIn() {
+            const taskId = document.getElementById('checkinTaskSelect').value;
+            if (!taskId) { showToast('Please select a task', 'warning'); return; }
+            const pos = await getCurrentPosition();
+            if (!pos) return;
+            try {
+                const res = await api('/api/reports.php?action=checkin', 'POST', {
+                    task_id: parseInt(taskId),
+                    latitude: pos.lat,
+                    longitude: pos.lng,
+                    accuracy: pos.accuracy,
+                });
+                currentReportId = res.data.id;
+                showToast('Checked in successfully!', 'success');
+                document.getElementById('locationDisplay').innerHTML =
+                    `📍 ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function doCheckOut() {
+            if (!currentReportId) { showToast('Check in first', 'warning'); return; }
+            const pos = await getCurrentPosition();
+            if (!pos) return;
+            try {
+                await api('/api/reports.php?action=checkout', 'POST', {
+                    report_id: currentReportId,
+                    latitude: pos.lat,
+                    longitude: pos.lng,
+                });
+                showToast('Checked out successfully!', 'success');
+                currentReportId = null;
+                loadMyTasks();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const taskId = document.getElementById('reportTaskSelect').value;
+            if (!taskId) { showToast('Please select a task', 'warning'); return; }
+            try {
+                const res = await api('/api/reports.php', 'POST', {
+                    task_id: parseInt(taskId),
+                    notes: document.getElementById('reportNotes').value,
+                    observations: document.getElementById('reportObservations').value,
+                    status: 'submitted',
+                });
+                // Upload files if any
+                await uploadPendingFiles(res.data.id);
+                showToast('Report submitted!', 'success');
+                e.target.reset();
+                document.getElementById('filePreview').innerHTML = '';
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

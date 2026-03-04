@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMan – Warehouses</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo"><span class="logo-icon">⚙️</span><span class="logo-text">OpsMan</span></div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html"  class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="shipments.html"  class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
+            <a href="customs.html"    class="nav-item"><span class="nav-icon">🛃</span> Customs</a>
+            <a href="warehouses.html" class="nav-item active"><span class="nav-icon">🏭</span> Warehouses</a>
+            <a href="transit.html"    class="nav-item"><span class="nav-icon">🚛</span> Transit</a>
+            <a href="tasks.html"      class="nav-item"><span class="nav-icon">✅</span> Tasks</a>
+            <a href="employees.html"  class="nav-item"><span class="nav-icon">👥</span> Employees</a>
+            <a href="reports.html"    class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+            <a href="analytics.html"  class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="alerts.html"     class="nav-item"><span class="nav-icon">🔔</span> Alerts</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 class="page-title">Warehouses</h2>
+            <button class="btn btn-primary" onclick="openCreateModal()">+ New Warehouse</button>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters-bar card">
+            <div class="filter-group">
+                <select id="filterStatus" class="form-control form-control-sm" onchange="applyFilters()">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <input type="text" id="filterSearch" class="form-control form-control-sm"
+                       placeholder="Search warehouses…" oninput="applyFilters()">
+            </div>
+        </div>
+
+        <!-- Warehouse Cards Grid -->
+        <div id="warehouseGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;margin-bottom:1.5rem">
+            <p class="text-center text-muted">Loading…</p>
+        </div>
+        <div class="pagination-bar" id="paginationBar"></div>
+    </main>
+
+    <!-- Create/Edit Warehouse Modal -->
+    <div class="modal-overlay hidden" id="formModal">
+        <div class="modal" style="max-width:600px">
+            <div class="modal-header">
+                <h3 id="formModalTitle">New Warehouse</h3>
+                <button class="modal-close" onclick="closeModal('formModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="warehouseForm" onsubmit="handleFormSubmit(event)">
+                    <input type="hidden" id="warehouseId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name *</label>
+                            <input type="text" id="fName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Code *</label>
+                            <input type="text" id="fCode" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea id="fAddress" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" id="fCity" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Country</label>
+                            <input type="text" id="fCountry" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="number" id="fLatitude" class="form-control" step="0.0000001">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="number" id="fLongitude" class="form-control" step="0.0000001">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Capacity (sqm)</label>
+                            <input type="number" id="fCapacitySqm" class="form-control" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="fStatus" class="form-control">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('formModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay hidden" id="detailModal">
+        <div class="modal" style="max-width:750px">
+            <div class="modal-header">
+                <h3 id="detailTitle">Warehouse Detail</h3>
+                <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+            </div>
+            <div class="modal-body" id="detailBody"></div>
+        </div>
+    </div>
+
+    <!-- Add Record Modal -->
+    <div class="modal-overlay hidden" id="recordModal">
+        <div class="modal" style="max-width:600px">
+            <div class="modal-header">
+                <h3>Add Warehouse Record</h3>
+                <button class="modal-close" onclick="closeModal('recordModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="recordForm" onsubmit="handleRecordSubmit(event)">
+                    <input type="hidden" id="rWarehouseId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Record Type</label>
+                            <select id="rRecordType" class="form-control">
+                                <option value="arrival">Arrival</option>
+                                <option value="inspection">Inspection</option>
+                                <option value="storage">Storage</option>
+                                <option value="dispatch">Dispatch</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Condition</label>
+                            <select id="rConditionStatus" class="form-control">
+                                <option value="pending">Pending</option>
+                                <option value="good">Good</option>
+                                <option value="damaged">Damaged</option>
+                                <option value="partial">Partial</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo Description</label>
+                        <textarea id="rCargoDescription" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" id="rQuantity" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <input type="text" id="rUnit" class="form-control" placeholder="pallet, box, kg…">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" id="rWeightKg" class="form-control" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Shipment ID</label>
+                            <input type="number" id="rShipmentId" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Inspection Date</label>
+                        <input type="datetime-local" id="rInspectionDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="rNotes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('recordModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script src="js/app.js"></script>
+    <script src="js/warehouses.js"></script>
+</body>
+</html>
