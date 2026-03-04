@@ -1,7 +1,7 @@
 <?php
 /**
  * OpsMan – Auth API
- * POST  ?action=login          — authenticate
+ * POST  action=login            — authenticate (action via POST body or query string)
  * POST  ?action=logout         — invalidate token
  * GET   ?action=me             — current user info
  * PUT   ?action=change-password — change password
@@ -34,8 +34,9 @@ if (!$db) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = $_GET['action'] ?? '';
-$body   = json_decode(file_get_contents('php://input'), true) ?? [];
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+$rawInput = file_get_contents('php://input');
+$body   = json_decode($rawInput, true) ?? $_POST;
 
 // ── Routes ────────────────────────────────────────────────────────────
 
