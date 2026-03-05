@@ -20,14 +20,10 @@ function authenticate(): array {
            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
            ?? '';
 
-    // Fallback: try apache_request_headers() / getallheaders()
+    // Fallback: try apache_request_headers() (also available as getallheaders())
     if ($header === '' && function_exists('apache_request_headers')) {
         $apacheHeaders = apache_request_headers();
         $header = $apacheHeaders['Authorization'] ?? $apacheHeaders['authorization'] ?? '';
-    }
-    if ($header === '' && function_exists('getallheaders')) {
-        $allHeaders = getallheaders();
-        $header = $allHeaders['Authorization'] ?? $allHeaders['authorization'] ?? '';
     }
 
     if (!preg_match('/^Bearer\s+(\S+)$/i', $header, $m)) {

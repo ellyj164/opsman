@@ -14,9 +14,10 @@ set_exception_handler(function (Throwable $e) {
         header('Content-Type: application/json; charset=utf-8');
         header('Access-Control-Allow-Origin: *');
     }
+    error_log('OpsMan exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
     echo json_encode([
         'success' => false,
-        'error'   => 'Internal server error: ' . $e->getMessage(),
+        'error'   => 'Internal server error',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 });
@@ -39,9 +40,10 @@ register_shutdown_function(function () {
             header('Content-Type: application/json; charset=utf-8');
             header('Access-Control-Allow-Origin: *');
         }
+        error_log('OpsMan fatal: ' . $error['message'] . ' in ' . $error['file'] . ':' . $error['line']);
         echo json_encode([
             'success' => false,
-            'error'   => 'Fatal error: ' . $error['message'],
+            'error'   => 'Internal server error',
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 });
