@@ -61,8 +61,9 @@ class Response {
     // ------------------------------------------------------------------
 
     private static function send(array $body, int $status): never {
-        // Clean any stray output that might have been generated (e.g. PHP warnings/notices)
-        while (ob_get_level() > 0) {
+        // Clean any stray output that might have been generated (e.g. PHP warnings/notices),
+        // but only if there is actual buffered content to discard.
+        while (ob_get_level() > 0 && ob_get_length() > 0) {
             ob_end_clean();
         }
         if (!headers_sent()) {

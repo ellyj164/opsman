@@ -4,6 +4,17 @@
 
 let currentPage = 1;
 
+/** Escape a string for safe HTML insertion */
+function esc(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const user = getStoredUser();
     if (!user) { window.location.href = 'index.html'; return; }
@@ -51,15 +62,15 @@ function renderTable(items) {
     }
     tbody.innerHTML = items.map(e => `
         <tr>
-            <td>${e.employee_code}</td>
-            <td><strong>${e.full_name}</strong></td>
-            <td>${e.department || '–'}</td>
-            <td>${e.phone || '–'}</td>
-            <td>${e.email || '–'}</td>
+            <td>${esc(e.employee_code)}</td>
+            <td><strong>${esc(e.full_name)}</strong></td>
+            <td>${esc(e.department) || '–'}</td>
+            <td>${esc(e.phone) || '–'}</td>
+            <td>${esc(e.email) || '–'}</td>
             <td><span class="badge ${e.is_active ? 'badge-success' : 'badge-secondary'}">${e.is_active ? 'Active' : 'Inactive'}</span></td>
             <td>
-                <button class="btn btn-sm btn-outline" onclick="viewEmployee(${e.id})">View</button>
-                <button class="btn btn-sm btn-outline" onclick="editEmployee(${e.id})">Edit</button>
+                <button class="btn btn-sm btn-outline" onclick="viewEmployee(${parseInt(e.id, 10)})">View</button>
+                <button class="btn btn-sm btn-outline" onclick="editEmployee(${parseInt(e.id, 10)})">Edit</button>
             </td>
         </tr>
     `).join('');
@@ -74,13 +85,13 @@ async function viewEmployee(id) {
         if (!modal || !body) return;
         body.innerHTML = `
             <div class="detail-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.875rem">
-                <div><strong>Name:</strong> ${e.full_name}</div>
-                <div><strong>Code:</strong> ${e.employee_code}</div>
-                <div><strong>Department:</strong> ${e.department || '–'}</div>
-                <div><strong>Phone:</strong> ${e.phone || '–'}</div>
-                <div><strong>Email:</strong> ${e.email || '–'}</div>
-                <div><strong>Address:</strong> ${e.address || '–'}</div>
-                <div><strong>Role:</strong> ${e.role || '–'}</div>
+                <div><strong>Name:</strong> ${esc(e.full_name)}</div>
+                <div><strong>Code:</strong> ${esc(e.employee_code)}</div>
+                <div><strong>Department:</strong> ${esc(e.department) || '–'}</div>
+                <div><strong>Phone:</strong> ${esc(e.phone) || '–'}</div>
+                <div><strong>Email:</strong> ${esc(e.email) || '–'}</div>
+                <div><strong>Address:</strong> ${esc(e.address) || '–'}</div>
+                <div><strong>Role:</strong> ${esc(e.role) || '–'}</div>
                 <div><strong>Status:</strong> ${e.is_active ? 'Active' : 'Inactive'}</div>
             </div>
         `;
@@ -94,3 +105,4 @@ async function editEmployee(id) {
     // Placeholder for edit modal
     showToast('Edit functionality coming soon', 'info');
 }
+

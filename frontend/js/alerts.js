@@ -4,6 +4,17 @@
 
 let alertPage = 1;
 
+/** Escape a string for safe HTML insertion */
+function esc(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const user = getStoredUser();
     if (!user) { window.location.href = 'index.html'; return; }
@@ -36,13 +47,13 @@ async function loadAlerts() {
 
         body.innerHTML = items.map(a => `
             <tr class="${a.is_read ? '' : 'font-bold'}">
-                <td>${a.id}</td>
-                <td>${a.title}</td>
-                <td>${a.message}</td>
-                <td><span class="badge ${a.severity === 'critical' ? 'badge-danger' : a.severity === 'warning' ? 'badge-warning' : 'badge-info'}">${a.severity}</span></td>
+                <td>${parseInt(a.id, 10)}</td>
+                <td>${esc(a.title)}</td>
+                <td>${esc(a.message)}</td>
+                <td><span class="badge ${a.severity === 'critical' ? 'badge-danger' : a.severity === 'warning' ? 'badge-warning' : 'badge-info'}">${esc(a.severity)}</span></td>
                 <td>${formatDate(a.created_at)}</td>
                 <td>
-                    ${!a.is_read ? `<button class="btn btn-xs btn-outline" onclick="markRead(${a.id})">Mark Read</button>` : '<span class="text-muted">Read</span>'}
+                    ${!a.is_read ? `<button class="btn btn-xs btn-outline" onclick="markRead(${parseInt(a.id, 10)})">Mark Read</button>` : '<span class="text-muted">Read</span>'}
                 </td>
             </tr>
         `).join('');
@@ -51,7 +62,7 @@ async function loadAlerts() {
             renderPagination(res.pagination, 'alertsPagination', p => { alertPage = p; loadAlerts(); });
         }
     } catch (e) {
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${esc(e.message)}</td></tr>`;
     }
 }
 
@@ -79,3 +90,4 @@ async function markAllRead() {
         showToast('Error: ' + e.message, 'error');
     }
 }
+
