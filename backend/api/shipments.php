@@ -76,7 +76,7 @@ switch ($method) {
         }
         $newId = $model->create($data);
         if (!$newId) Response::error('Failed to create shipment', 500);
-        Response::success(['id' => $newId], 'Shipment created', 201);
+        Response::success(['id' => $newId], 201);
         break;
 
     case 'PUT':
@@ -85,7 +85,7 @@ switch ($method) {
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
         if (!$model->findById($id)) Response::error('Shipment not found', 404);
         $model->update($id, $data);
-        Response::success(null, 'Shipment updated');
+        Response::success(null);
         break;
 
     case 'DELETE':
@@ -93,7 +93,7 @@ switch ($method) {
         if (!$id) Response::error('Shipment ID required', 400);
         if (!$model->findById($id)) Response::error('Shipment not found', 404);
         $model->delete($id);
-        Response::success(null, 'Shipment deleted');
+        Response::success(null);
         break;
 
     default:

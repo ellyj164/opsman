@@ -67,7 +67,7 @@ switch ($method) {
         if (empty($data['declarant_name'])) Response::error("Field 'declarant_name' is required", 422);
         $newId = $model->create($data);
         if (!$newId) Response::error('Failed to create declaration', 500);
-        Response::success(['id' => $newId], 'Declaration created', 201);
+        Response::success(['id' => $newId], 201);
         break;
 
     case 'PUT':
@@ -80,7 +80,7 @@ switch ($method) {
         } else {
             $model->update($id, $data);
         }
-        Response::success(null, 'Declaration updated');
+        Response::success(null);
         break;
 
     case 'DELETE':
@@ -88,7 +88,7 @@ switch ($method) {
         if (!$id) Response::error('Declaration ID required', 400);
         if (!$model->findById($id)) Response::error('Declaration not found', 404);
         $model->delete($id);
-        Response::success(null, 'Declaration deleted');
+        Response::success(null);
         break;
 
     default:

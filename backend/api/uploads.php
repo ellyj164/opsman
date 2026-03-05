@@ -38,11 +38,11 @@ if ($method === 'GET') {
         Response::error('report_id required', 400);
     }
     $stmt = $db->prepare(
-        "SELECT d.*, e.full_name AS employee_name
+        "SELECT d.*, u.username AS uploaded_by_name
            FROM documents d
-           JOIN employees e ON e.id = d.employee_id
-          WHERE d.task_report_id = :rid
-          ORDER BY d.uploaded_at DESC"
+      LEFT JOIN users u ON u.id = d.uploaded_by
+          WHERE d.related_to = 'task' AND d.related_id = :rid
+          ORDER BY d.created_at DESC"
     );
     $stmt->execute([':rid' => $reportId]);
     Response::success($stmt->fetchAll());
@@ -87,16 +87,16 @@ if ($method === 'POST') {
     finfo_close($finfo);
 
     $stmt = $db->prepare(
-        "INSERT INTO documents (task_report_id, employee_id, file_name, file_path, file_type, file_size)
-         VALUES (:rid, :eid, :name, :path, :type, :size)"
+        "INSERT INTO documents (related_to, related_id, file_name, file_path, file_type, file_size, uploaded_by)
+         VALUES ('task', :rid, :name, :path, :type, :size, :uid)"
     );
     $stmt->execute([
         ':rid'  => $reportId,
-        ':eid'  => $emp['id'],
         ':name' => $_FILES['file']['name'],
         ':path' => 'uploads/' . $safeName,
         ':type' => $mimeType,
         ':size' => $_FILES['file']['size'],
+        ':uid'  => $user['id'],
     ]);
 
     $docId = (int) $db->lastInsertId();

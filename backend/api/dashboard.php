@@ -118,7 +118,7 @@ function buildStats(PDO $db): array {
         'active_shipments'  => (int) $db->query("SELECT COUNT(*) FROM shipments WHERE status IN ('pending','in_transit','arrived')")->fetchColumn(),
         'customs_pending'   => (int) $db->query("SELECT COUNT(*) FROM customs_declarations WHERE status IN ('draft','submitted','under_review')")->fetchColumn(),
         'warehouses'        => (int) $db->query("SELECT COUNT(*) FROM warehouses")->fetchColumn(),
-        'active_transits'   => (int) $db->query("SELECT COUNT(*) FROM transit_records WHERE status IN ('in_transit','border_entry','border_clearance')")->fetchColumn(),
+        'active_transits'   => (int) $db->query("SELECT COUNT(*) FROM transit_records WHERE status IN ('in_transit','border_entry','border_exit')")->fetchColumn(),
     ];
 }
 

@@ -75,7 +75,7 @@ switch ($method) {
             if (empty($data['warehouse_id'])) Response::error("Field 'warehouse_id' is required", 422);
             $newId = $model->createRecord($data);
             if (!$newId) Response::error('Failed to create record', 500);
-            Response::success(['id' => $newId], 'Warehouse record created', 201);
+            Response::success(['id' => $newId], 201);
         }
         requireManager($user);
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -83,7 +83,7 @@ switch ($method) {
         if (empty($data['code'])) Response::error("Field 'code' is required", 422);
         $newId = $model->create($data);
         if (!$newId) Response::error('Failed to create warehouse', 500);
-        Response::success(['id' => $newId], 'Warehouse created', 201);
+        Response::success(['id' => $newId], 201);
         break;
 
     case 'PUT':
@@ -92,7 +92,7 @@ switch ($method) {
         if (!$model->findById($id)) Response::error('Warehouse not found', 404);
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
         $model->update($id, $data);
-        Response::success(null, 'Warehouse updated');
+        Response::success(null);
         break;
 
     case 'DELETE':
@@ -100,7 +100,7 @@ switch ($method) {
         if (!$id) Response::error('Warehouse ID required', 400);
         if (!$model->findById($id)) Response::error('Warehouse not found', 404);
         $model->delete($id);
-        Response::success(null, 'Warehouse deleted');
+        Response::success(null);
         break;
 
     default:

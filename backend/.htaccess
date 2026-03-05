@@ -12,8 +12,12 @@ DirectoryIndex index.php
     Header always set Access-Control-Max-Age "3600"
 </IfModule>
 
-# Handle OPTIONS pre-flight without going to PHP
+# Pass Authorization header to PHP (required for CGI/FastCGI setups)
 RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Handle OPTIONS pre-flight without going to PHP
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ $1 [R=204,L]
 

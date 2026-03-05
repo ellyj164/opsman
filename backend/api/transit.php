@@ -68,7 +68,7 @@ switch ($method) {
         if (empty($data['vehicle_no'])) Response::error("Field 'vehicle_no' is required", 422);
         $newId = $model->create($data);
         if (!$newId) Response::error('Failed to create transit record', 500);
-        Response::success(['id' => $newId], 'Transit record created', 201);
+        Response::success(['id' => $newId], 201);
         break;
 
     case 'PUT':
@@ -81,7 +81,7 @@ switch ($method) {
         } else {
             $model->update($id, $data);
         }
-        Response::success(null, 'Transit record updated');
+        Response::success(null);
         break;
 
     case 'DELETE':
@@ -89,7 +89,7 @@ switch ($method) {
         if (!$id) Response::error('Transit ID required', 400);
         if (!$model->findById($id)) Response::error('Transit record not found', 404);
         $model->delete($id);
-        Response::success(null, 'Transit record deleted');
+        Response::success(null);
         break;
 
     default:
