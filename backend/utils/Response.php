@@ -8,11 +8,23 @@ class Response {
     /**
      * Send a successful JSON response.
      *
-     * @param mixed  $data    Payload to encode
-     * @param int    $status  HTTP status code (default 200)
+     * @param mixed          $data           Payload to encode
+     * @param string|int     $messageOrStatus Optional human-readable message or HTTP status code
+     * @param int            $status          HTTP status code (default 200)
      */
-    public static function success(mixed $data = null, int $status = 200): never {
-        self::send(['success' => true, 'data' => $data], $status);
+    public static function success(mixed $data = null, string|int $messageOrStatus = '', int $status = 200): never {
+        // If the second argument is an int, treat it as the status code (no message)
+        if (is_int($messageOrStatus)) {
+            $status  = $messageOrStatus;
+            $message = '';
+        } else {
+            $message = $messageOrStatus;
+        }
+        $body = ['success' => true, 'data' => $data];
+        if ($message !== '') {
+            $body['message'] = $message;
+        }
+        self::send($body, $status);
     }
 
     /**
@@ -49,6 +61,11 @@ class Response {
     // ------------------------------------------------------------------
 
     private static function send(array $body, int $status): never {
+        // Clean any stray output that might have been generated (e.g. PHP warnings/notices),
+        // but only if there is actual buffered content to discard.
+        while (ob_get_level() > 0 && ob_get_length() > 0) {
+            ob_end_clean();
+        }
         if (!headers_sent()) {
             http_response_code($status);
             header('Content-Type: application/json; charset=utf-8');
