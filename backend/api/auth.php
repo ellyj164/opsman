@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+ini_set('log_errors', '1');
 /**
  * OpsMan – Auth API
  * POST  action=login            — authenticate (action via POST body or query string)

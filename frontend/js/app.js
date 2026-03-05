@@ -62,7 +62,14 @@ async function api(path, method = 'GET', body = null) {
     }
 
     const res = await fetch(url, opts);
-    const data = await res.json().catch(() => ({ success: false, error: 'Invalid server response' }));
+    const rawText = await res.text();
+    let data;
+    try {
+        data = JSON.parse(rawText);
+    } catch (e) {
+        console.error('API JSON parse failed for', url, '- Status:', res.status, '- Raw response:', rawText);
+        data = { success: false, error: 'Invalid server response' };
+    }
 
     if (!res.ok || data.success === false) {
         const msg = data.error || `Request failed (${res.status})`;
