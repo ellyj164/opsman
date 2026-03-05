@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInfoEl = document.getElementById('userInfo');
     if (userInfoEl) userInfoEl.textContent = user.username;
 
-    // Hide "New Task" button for field employees
+    // Show "New Task" button for all roles (employees can create too)
     const createBtn = document.getElementById('createTaskBtn');
-    if (createBtn && user.role === 'field_employee') {
-        createBtn.classList.add('hidden');
+    if (createBtn) {
+        // All roles can create tasks
     }
 
     if (document.getElementById('tasksBody')) {
@@ -215,6 +215,9 @@ async function editTask(id) {
         document.getElementById('taskModalTitle').textContent = 'Edit Task';
         document.getElementById('taskId').value          = t.id;
         document.getElementById('taskTitle').value        = t.title;
+        if (document.getElementById('taskRef')) {
+            document.getElementById('taskRef').value      = t.ref || '';
+        }
         document.getElementById('taskPriority').value     = t.priority;
         document.getElementById('taskType').value         = t.task_type;
         document.getElementById('taskAssignTo').value     = t.assigned_to || '';
@@ -255,6 +258,7 @@ document.addEventListener('submit', async (e) => {
     const isEdit   = !!id;
     const deadline = document.getElementById('taskDeadline').value;
     const payload  = {
+        ref:          document.getElementById('taskRef')?.value        || null,
         title:        document.getElementById('taskTitle').value,
         task_type:    document.getElementById('taskType').value,
         priority:     document.getElementById('taskPriority').value,

@@ -13,23 +13,25 @@ class Task {
     public function create(array $data): int|false {
         $stmt = $this->db->prepare(
             "INSERT INTO tasks
-                (title, description, task_type, assigned_to, assigned_by,
-                 location, shipment_ref, deadline, priority, status)
+                (ref, title, description, task_type, assigned_to, assigned_by,
+                 created_by_user, location, shipment_ref, deadline, priority, status)
              VALUES
-                (:title, :description, :task_type, :assigned_to, :assigned_by,
-                 :location, :shipment_ref, :deadline, :priority, :status)"
+                (:ref, :title, :description, :task_type, :assigned_to, :assigned_by,
+                 :created_by_user, :location, :shipment_ref, :deadline, :priority, :status)"
         );
         $stmt->execute([
-            ':title'        => $data['title'],
-            ':description'  => $data['description']  ?? null,
-            ':task_type'    => $data['task_type'],
-            ':assigned_to'  => $data['assigned_to']  ?? null,
-            ':assigned_by'  => $data['assigned_by']  ?? null,
-            ':location'     => $data['location']     ?? null,
-            ':shipment_ref' => $data['shipment_ref'] ?? null,
-            ':deadline'     => $data['deadline']     ?? null,
-            ':priority'     => $data['priority']     ?? 'medium',
-            ':status'       => $data['status']       ?? 'pending',
+            ':ref'             => $data['ref']             ?? null,
+            ':title'           => $data['title'],
+            ':description'     => $data['description']     ?? null,
+            ':task_type'       => $data['task_type'],
+            ':assigned_to'     => $data['assigned_to']     ?? null,
+            ':assigned_by'     => $data['assigned_by']     ?? null,
+            ':created_by_user' => $data['created_by_user'] ?? null,
+            ':location'        => $data['location']        ?? null,
+            ':shipment_ref'    => $data['shipment_ref']    ?? null,
+            ':deadline'        => $data['deadline']        ?? null,
+            ':priority'        => $data['priority']        ?? 'medium',
+            ':status'          => $data['status']          ?? 'pending',
         ]);
         return (int) $this->db->lastInsertId() ?: false;
     }
@@ -85,8 +87,8 @@ class Task {
     }
 
     public function update(int $id, array $data): bool {
-        $allowed = ['title','description','task_type','assigned_to','assigned_by',
-                    'location','shipment_ref','deadline','priority','status'];
+        $allowed = ['ref','title','description','task_type','assigned_to','assigned_by',
+                    'created_by_user','location','shipment_ref','deadline','priority','status'];
         $fields  = [];
         $params  = [':id' => $id];
 

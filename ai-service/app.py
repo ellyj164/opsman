@@ -88,6 +88,23 @@ def employee_score():
     return jsonify({"success": True, "data": result})
 
 
+@app.route("/api/score_employee", methods=["GET"])
+def score_employee():
+    """
+    Score a single employee based on their task completion data.
+    Query params:
+      - employee_id (int)
+    Returns points awarded and reasoning.
+    """
+    employee_id = request.args.get("employee_id")
+    if not employee_id:
+        return jsonify({"success": False, "error": "employee_id required"}), 400
+
+    employee_id = int(employee_id)
+    result = analyzer.score_single_employee(employee_id)
+    return jsonify({"success": True, "data": result})
+
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "service": "opsman-ai", "version": "1.0.0"})

@@ -78,6 +78,72 @@ class PerformanceAnalyzer:
         return results
 
     # ------------------------------------------------------------------
+    # Single employee scoring (for AI points)
+    # ------------------------------------------------------------------
+
+    def score_single_employee(self, employee_id: int) -> dict:
+        """
+        Score a single employee based on their task/step completion data.
+        Returns points awarded and reasoning.
+        """
+        rows = fetch_all(
+            """
+            SELECT e.id, e.full_name, e.performance_score AS db_score,
+                   COUNT(t.id) AS total_tasks,
+                   SUM(t.status = 'completed') AS completed,
+                   SUM(t.status = 'overdue') AS overdue
+              FROM employees e
+              LEFT JOIN tasks t ON t.assigned_to = e.id
+             WHERE e.id = %s
+             GROUP BY e.id, e.full_name, e.performance_score
+            """,
+            (employee_id,),
+        )
+
+        if not rows:
+            return {
+                "employee_id": employee_id,
+                "points_awarded": 0,
+                "reason": "Employee not found or no task data",
+                "insights": [],
+            }
+
+        r = rows[0]
+        total = int(r.get("total_tasks") or 0)
+        completed = int(r.get("completed") or 0)
+        overdue = int(r.get("overdue") or 0)
+
+        # Compute points
+        base_points = completed * 5
+        speed_bonus = max(0, (completed - overdue)) * 2
+        total_points = base_points + speed_bonus
+
+        insights = []
+        if total > 0:
+            rate = completed / total * 100
+            if rate >= 80:
+                insights.append(f"High completion rate: {rate:.0f}%")
+            if overdue == 0 and completed > 0:
+                insights.append("Perfect on-time record")
+            if overdue > total * 0.3:
+                insights.append("Too many overdue tasks – consider lighter workload")
+
+        reason = "Task completion scoring"
+        if speed_bonus > 0:
+            reason = f"Fast completion of {completed} tasks with {overdue} overdue"
+
+        return {
+            "employee_id": employee_id,
+            "full_name": r.get("full_name", ""),
+            "points_awarded": total_points,
+            "reason": reason,
+            "total_tasks": total,
+            "completed": completed,
+            "overdue": overdue,
+            "insights": insights,
+        }
+
+    # ------------------------------------------------------------------
     # Bottleneck analysis
     # ------------------------------------------------------------------
 

@@ -101,25 +101,29 @@ CREATE TABLE `shipments` (
 DROP TABLE IF EXISTS `tasks`;
 CREATE TABLE `tasks` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `ref` varchar(50) DEFAULT NULL,
   `title` varchar(180) NOT NULL,
   `description` text DEFAULT NULL,
-  `task_type` enum('customs_declaration','warehouse_inspection','cargo_inspection','border_transit_supervision') NOT NULL DEFAULT 'cargo_inspection',
+  `task_type` enum('customs_declaration','warehouse_inspection','cargo_inspection','border_transit_supervision','import_im4','export_ex1') NOT NULL DEFAULT 'cargo_inspection',
   `assigned_to` int(10) unsigned DEFAULT NULL,
   `assigned_by` int(10) unsigned DEFAULT NULL,
+  `created_by_user` int(10) unsigned DEFAULT NULL,
   `location` varchar(180) DEFAULT NULL,
   `shipment_ref` varchar(30) DEFAULT NULL,
   `deadline` datetime DEFAULT NULL,
   `priority` enum('low','medium','high','urgent') NOT NULL DEFAULT 'medium',
-  `status` enum('pending','assigned','in_progress','completed','overdue') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','assigned','in_progress','completed','overdue','active') NOT NULL DEFAULT 'pending',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tasks_ref` (`ref`),
   KEY `idx_tasks_assigned_to` (`assigned_to`),
   KEY `idx_tasks_assigned_by` (`assigned_by`),
   KEY `idx_tasks_status` (`status`),
   KEY `idx_tasks_priority` (`priority`),
   CONSTRAINT `fk_tasks_assigned_to` FOREIGN KEY (`assigned_to`) REFERENCES `employees` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_tasks_assigned_by` FOREIGN KEY (`assigned_by`) REFERENCES `employees` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_tasks_assigned_by` FOREIGN KEY (`assigned_by`) REFERENCES `employees` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_tasks_created_by_user` FOREIGN KEY (`created_by_user`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
@@ -351,6 +355,68 @@ CREATE TABLE `transit_records` (
   KEY `idx_transit_records_status` (`status`),
   CONSTRAINT `fk_transit_records_shipment_id` FOREIGN KEY (`shipment_id`) REFERENCES `shipments` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_transit_records_supervisor_id` FOREIGN KEY (`supervisor_id`) REFERENCES `employees` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- Table: task_steps
+-- -----------------------------------------------------------
+
+DROP TABLE IF EXISTS `task_steps`;
+CREATE TABLE `task_steps` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `task_id` int(10) unsigned NOT NULL,
+  `step_number` int(10) unsigned NOT NULL DEFAULT 1,
+  `step_name` varchar(180) NOT NULL,
+  `assigned_to` int(10) unsigned DEFAULT NULL,
+  `status` enum('pending','active','completed') NOT NULL DEFAULT 'pending',
+  `completed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_task_steps_task_id` (`task_id`),
+  KEY `idx_task_steps_assigned_to` (`assigned_to`),
+  KEY `idx_task_steps_status` (`status`),
+  CONSTRAINT `fk_task_steps_task_id` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_task_steps_assigned_to` FOREIGN KEY (`assigned_to`) REFERENCES `employees` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- Table: notifications
+-- -----------------------------------------------------------
+
+DROP TABLE IF EXISTS `notifications`;
+CREATE TABLE `notifications` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) unsigned NOT NULL,
+  `message` text NOT NULL,
+  `type` varchar(50) NOT NULL DEFAULT 'info',
+  `read_status` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_notifications_user_id` (`user_id`),
+  KEY `idx_notifications_read_status` (`read_status`),
+  KEY `idx_notifications_created_at` (`created_at`),
+  CONSTRAINT `fk_notifications_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- Table: employee_points
+-- -----------------------------------------------------------
+
+DROP TABLE IF EXISTS `employee_points`;
+CREATE TABLE `employee_points` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `employee_id` int(10) unsigned NOT NULL,
+  `task_id` int(10) unsigned DEFAULT NULL,
+  `step_name` varchar(180) DEFAULT NULL,
+  `points` int NOT NULL DEFAULT 0,
+  `reason` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_employee_points_employee_id` (`employee_id`),
+  KEY `idx_employee_points_task_id` (`task_id`),
+  KEY `idx_employee_points_created_at` (`created_at`),
+  CONSTRAINT `fk_employee_points_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_employee_points_task_id` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------

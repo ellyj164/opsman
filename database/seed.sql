@@ -48,42 +48,54 @@ INSERT IGNORE INTO `shipments` (`ref_number`, `shipper_name`, `consignee_name`, 
 -- -------------------------------------------------------
 -- Tasks
 -- -------------------------------------------------------
-INSERT IGNORE INTO `tasks` (`title`, `description`, `task_type`, `assigned_to`, `assigned_by`, `location`, `shipment_ref`, `deadline`, `priority`, `status`) VALUES
-('Customs Declaration - SHP-2024-001',
+INSERT IGNORE INTO `tasks` (`ref`, `title`, `description`, `task_type`, `assigned_to`, `assigned_by`, `created_by_user`, `location`, `shipment_ref`, `deadline`, `priority`, `status`) VALUES
+('TSK-2024-001', 'Customs Declaration - SHP-2024-001',
  'Process customs declaration for electronics shipment from Shanghai. Verify all documentation and duties.',
- 'customs_declaration', 3, 2,
+ 'customs_declaration', 3, 2, 2,
  'Los Angeles Port - Terminal B',  'SHP-2024-001',
  DATE_ADD(NOW(), INTERVAL 2 DAY),  'high', 'in_progress'),
 
-('Warehouse Inspection - SHP-2024-002',
+('TSK-2024-002', 'Warehouse Inspection - SHP-2024-002',
  'Conduct full warehouse inspection for automotive parts received from Hamburg.',
- 'warehouse_inspection', 3, 2,
+ 'warehouse_inspection', 3, 2, 2,
  'New York Warehouse District',    'SHP-2024-002',
  DATE_ADD(NOW(), INTERVAL 1 DAY),  'urgent', 'assigned'),
 
-('Border Transit Supervision - SHP-2024-003',
+('TSK-2024-003', 'Border Transit Supervision - SHP-2024-003',
  'Supervise border transit for consumer goods convoy from Japan.',
- 'border_transit_supervision', 3, 2,
+ 'border_transit_supervision', 3, 2, 2,
  'Chicago International Border',   'SHP-2024-003',
  DATE_ADD(NOW(), INTERVAL 5 DAY),  'medium', 'pending'),
 
-('Cargo Inspection - SHP-2024-004',
+('TSK-2024-004', 'Cargo Inspection - SHP-2024-004',
  'Inspect cleared agricultural products before final delivery.',
- 'cargo_inspection', 3, 2,
+ 'cargo_inspection', 3, 2, 2,
  'Miami Cargo Terminal',           'SHP-2024-004',
  DATE_SUB(NOW(), INTERVAL 1 DAY),  'high', 'completed'),
 
-('Cargo Inspection - SHP-2024-005',
+('TSK-2024-005', 'Cargo Inspection - SHP-2024-005',
  'Inspect held machinery shipment from Seoul. Resolve customs hold.',
- 'cargo_inspection', 3, 2,
+ 'cargo_inspection', 3, 2, 2,
  'Seattle Port Authority',         'SHP-2024-005',
  DATE_SUB(NOW(), INTERVAL 2 DAY),  'urgent', 'overdue'),
 
-('Routine Warehouse Audit',
+('TSK-2024-006', 'Routine Warehouse Audit',
  'Monthly routine audit of main warehouse facility.',
- 'warehouse_inspection', 3, 2,
+ 'warehouse_inspection', 3, 2, 2,
  'HQ Warehouse',                   NULL,
- DATE_ADD(NOW(), INTERVAL 7 DAY),  'low', 'pending');
+ DATE_ADD(NOW(), INTERVAL 7 DAY),  'low', 'pending'),
+
+('IM4-2024-001', 'Import Clearance - Electronics Batch',
+ 'Full IM4 import clearance process for electronics batch from China.',
+ 'import_im4', 3, 2, 2,
+ 'Kigali Dry Port',               'SHP-2024-001',
+ DATE_ADD(NOW(), INTERVAL 5 DAY),  'high', 'active'),
+
+('EX1-2024-001', 'Export Processing - Coffee Shipment',
+ 'Full EX1 export clearance for coffee shipment to Belgium.',
+ 'export_ex1', 4, 2, 2,
+ 'Magerwa Warehouse',             'SHP-2024-003',
+ DATE_ADD(NOW(), INTERVAL 3 DAY),  'medium', 'active');
 
 -- -------------------------------------------------------
 -- Task Reports
@@ -206,3 +218,47 @@ INSERT IGNORE INTO `warehouse_records` (`warehouse_id`, `shipment_id`, `record_t
 INSERT IGNORE INTO `transit_records` (`shipment_id`, `vehicle_no`, `driver_name`, `driver_phone`, `origin_border`, `destination_border`, `departure_time`, `expected_arrival`, `status`, `supervisor_id`, `latitude`, `longitude`) VALUES
 (3, 'TRK-IL-4821', 'Mike Johnson', '+1-555-9001', 'Canadian Border – Niagara', 'Chicago Distribution', DATE_SUB(NOW(), INTERVAL 6 HOUR), DATE_ADD(NOW(), INTERVAL 2 HOUR), 'in_transit', 7, 41.8500, -87.6500),
 (5, 'TRK-WA-1122', 'Sarah Lee',   '+1-555-9002', 'Seattle Port of Entry',    'Seattle Warehouse',    DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'border_entry', 7, 47.6062, -122.3321);
+
+-- -------------------------------------------------------
+-- Task Steps (for IM4 import task id=7)
+-- -------------------------------------------------------
+INSERT IGNORE INTO `task_steps` (`task_id`, `step_number`, `step_name`, `assigned_to`, `status`, `completed_at`) VALUES
+(7, 1, 'Arrival Notice correction',        3, 'completed', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(7, 2, 'Declaration',                       3, 'completed', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(7, 3, 'Pre-Physical Verification',         3, 'active',    NULL),
+(7, 4, 'Physical Verification',             NULL, 'pending',  NULL),
+(7, 5, 'Release Request',                   NULL, 'pending',  NULL),
+(7, 6, 'Warehouse Payment Processes',       NULL, 'pending',  NULL),
+(7, 7, 'Release Request',                   NULL, 'pending',  NULL),
+(7, 8, 'Warehouse Payment Procedures',      NULL, 'pending',  NULL),
+(7, 9, 'Telling/Exit',                      NULL, 'pending',  NULL);
+
+-- Task Steps (for EX1 export task id=8)
+INSERT IGNORE INTO `task_steps` (`task_id`, `step_number`, `step_name`, `assigned_to`, `status`) VALUES
+(8, 1, 'Driver application / Badge request', 4, 'completed'),
+(8, 2, 'Pallets correction',                 4, 'active'),
+(8, 3, 'Offloading',                         NULL, 'pending'),
+(8, 4, 'Declaration',                         NULL, 'pending'),
+(8, 5, 'Attachments',                         NULL, 'pending'),
+(8, 6, 'Documents submission',                NULL, 'pending'),
+(8, 7, 'Exiting',                             NULL, 'pending');
+
+-- -------------------------------------------------------
+-- Notifications
+-- -------------------------------------------------------
+INSERT IGNORE INTO `notifications` (`user_id`, `message`, `type`, `read_status`) VALUES
+(3, 'You have been assigned task: Import Clearance - Electronics Batch', 'task_assigned', 0),
+(3, 'Step "Arrival Notice correction" has been completed for IM4-2024-001', 'step_completed', 1),
+(3, 'Step "Declaration" has been completed for IM4-2024-001', 'step_completed', 0),
+(1, 'New import task IM4-2024-001 created and awaiting approval', 'task_created', 0),
+(2, 'Employee Jane Field completed Declaration step on IM4-2024-001', 'step_completed', 0);
+
+-- -------------------------------------------------------
+-- Employee Points
+-- -------------------------------------------------------
+INSERT IGNORE INTO `employee_points` (`employee_id`, `task_id`, `step_name`, `points`, `reason`) VALUES
+(3, 7, 'Arrival Notice correction', 5,  'Completed arrival notice correction'),
+(3, 7, 'Declaration',              5,  'Completed declaration step'),
+(4, 8, 'Driver application / Badge request', 5, 'Completed driver application step'),
+(3, 4, 'Cargo Inspection',        10, 'Completed full cargo inspection task'),
+(3, 1, 'Customs Declaration',      5, 'Completed customs declaration task');

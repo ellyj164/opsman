@@ -150,6 +150,7 @@ function statusBadge(status) {
         pending: 'badge-secondary', assigned: 'badge-info',
         in_progress: 'badge-primary', completed: 'badge-success', overdue: 'badge-danger',
         draft: 'badge-secondary', submitted: 'badge-info', reviewed: 'badge-success',
+        active: 'badge-primary',
     };
     return `<span class="badge ${map[status] || 'badge-secondary'}">${status.replace(/_/g, ' ')}</span>`;
 }

@@ -11,16 +11,18 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo"><span class="logo-icon">⚙️</span><span class="logo-text">OpsMan</span></div>
         <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-            <a href="shipments.html"  class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
-            <a href="customs.html"    class="nav-item"><span class="nav-icon">🛃</span> Customs</a>
-            <a href="warehouses.html" class="nav-item"><span class="nav-icon">🏭</span> Warehouses</a>
-            <a href="transit.html"    class="nav-item"><span class="nav-icon">🚛</span> Transit</a>
-            <a href="tasks.html"     class="nav-item active"><span class="nav-icon">✅</span> Tasks</a>
-            <a href="employees.html" class="nav-item"><span class="nav-icon">👥</span> Employees</a>
-            <a href="reports.html"   class="nav-item"><span class="nav-icon">📋</span> Reports</a>
-            <a href="analytics.html" class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
-            <a href="alerts.html"    class="nav-item"><span class="nav-icon">🔔</span> Alerts</a>
+            <a href="dashboard.html"           class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="employee-dashboard.html"  class="nav-item"><span class="nav-icon">👤</span> My Dashboard</a>
+            <a href="shipments.html"           class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
+            <a href="customs.html"             class="nav-item"><span class="nav-icon">🛃</span> Customs</a>
+            <a href="warehouses.html"          class="nav-item"><span class="nav-icon">🏭</span> Warehouses</a>
+            <a href="transit.html"             class="nav-item"><span class="nav-icon">🚛</span> Transit</a>
+            <a href="tasks.html"               class="nav-item active"><span class="nav-icon">✅</span> Tasks</a>
+            <a href="employees.html"           class="nav-item"><span class="nav-icon">👥</span> Employees</a>
+            <a href="points.html"              class="nav-item"><span class="nav-icon">🏆</span> Points</a>
+            <a href="reports.html"             class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+            <a href="analytics.html"           class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="alerts.html"              class="nav-item"><span class="nav-icon">🔔</span> Alerts <span class="badge badge-danger" id="alertBadge">0</span></a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-info" id="userInfo"></div>
@@ -107,11 +109,15 @@
                 <form id="taskForm" novalidate>
                     <input type="hidden" id="taskId">
                     <div class="form-row">
-                        <div class="form-group col-8">
+                        <div class="form-group col-6">
                             <label class="form-label">Title *</label>
                             <input type="text" id="taskTitle" class="form-control" required>
                         </div>
-                        <div class="form-group col-4">
+                        <div class="form-group col-3">
+                            <label class="form-label">REF (unique)</label>
+                            <input type="text" id="taskRef" class="form-control" placeholder="TSK-2024-XXX">
+                        </div>
+                        <div class="form-group col-3">
                             <label class="form-label">Priority *</label>
                             <select id="taskPriority" class="form-control" required>
                                 <option value="low">Low</option>
@@ -129,6 +135,8 @@
                                 <option value="warehouse_inspection">Warehouse Inspection</option>
                                 <option value="border_transit_supervision">Border Transit Supervision</option>
                                 <option value="cargo_inspection">Cargo Inspection</option>
+                                <option value="import_im4">Import IM4</option>
+                                <option value="export_ex1">Export EX1</option>
                             </select>
                         </div>
                         <div class="form-group col-6">
