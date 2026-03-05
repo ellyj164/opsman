@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsMan – Employee Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-page">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">⚙️</span>
+            <span class="logo-text">OpsMan</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html"           class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+            <a href="employee-dashboard.html"  class="nav-item active"><span class="nav-icon">👤</span> My Dashboard</a>
+            <a href="shipments.html"           class="nav-item"><span class="nav-icon">🚢</span> Shipments</a>
+            <a href="customs.html"             class="nav-item"><span class="nav-icon">🛃</span> Customs</a>
+            <a href="warehouses.html"          class="nav-item"><span class="nav-icon">🏭</span> Warehouses</a>
+            <a href="transit.html"             class="nav-item"><span class="nav-icon">🚛</span> Transit</a>
+            <a href="tasks.html"               class="nav-item"><span class="nav-icon">✅</span> Tasks</a>
+            <a href="employees.html"           class="nav-item"><span class="nav-icon">👥</span> Employees</a>
+            <a href="points.html"              class="nav-item"><span class="nav-icon">🏆</span> Points</a>
+            <a href="reports.html"             class="nav-item"><span class="nav-icon">📋</span> Reports</a>
+            <a href="analytics.html"           class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+            <a href="alerts.html"              class="nav-item"><span class="nav-icon">🔔</span> Alerts <span class="badge badge-danger" id="alertBadge">0</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="userInfo"></div>
+            <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+        <header class="page-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h2 class="page-title">Employee Dashboard</h2>
+            <div style="display:flex;align-items:center;gap:1rem;">
+                <button class="btn btn-sm btn-outline" onclick="loadDashboard()" title="Refresh">↺ Refresh</button>
+                <div style="position:relative;cursor:pointer;" onclick="toggleNotifPanel()">
+                    🔔 <span class="badge badge-danger" id="notifBadge" style="position:absolute;top:-6px;right:-10px;display:none;">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Employee Info + Stats -->
+        <section class="stats-grid" id="statsGrid">
+            <div class="stat-card stat-blue">
+                <div class="stat-icon">🏅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statPoints">–</div>
+                    <div class="stat-label">Total Points</div>
+                </div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statRank">–</div>
+                    <div class="stat-label">Rank</div>
+                </div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statCompleted">–</div>
+                    <div class="stat-label">Tasks Completed</div>
+                </div>
+            </div>
+            <div class="stat-card stat-orange">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statPending">–</div>
+                    <div class="stat-label">Tasks Pending</div>
+                </div>
+            </div>
+            <div class="stat-card stat-teal">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statActive">–</div>
+                    <div class="stat-label">Active Tasks</div>
+                </div>
+            </div>
+            <div class="stat-card stat-indigo">
+                <div class="stat-icon">📋</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statSteps">–</div>
+                    <div class="stat-label">Active Steps</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notifications Panel (hidden by default) -->
+        <div class="card hidden" id="notifPanel" style="margin:0 1.5rem;">
+            <div class="card-header">
+                <h3>🔔 Notifications</h3>
+                <button class="btn btn-xs btn-outline" onclick="markAllNotifRead()">Mark All Read</button>
+            </div>
+            <div id="notifList" class="alerts-list">
+                <p class="text-center text-muted" style="padding:1rem;">Loading…</p>
+            </div>
+        </div>
+
+        <!-- Active Steps (Workflow) -->
+        <div class="card" style="margin:0 1.5rem 1.25rem;">
+            <div class="card-header">
+                <h3>🔄 Active Workflow Steps</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Step</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeStepsBody">
+                        <tr><td colspan="4" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Active / Pending Tasks -->
+        <div class="card" style="margin:0 1.5rem 1.25rem;">
+            <div class="card-header">
+                <h3>📝 My Tasks</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>REF</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Deadline</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myTasksBody">
+                        <tr><td colspan="6" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="card" style="margin:0 1.5rem 1.25rem;">
+            <div class="card-header">
+                <h3>✅ Completed Tasks</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>REF</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Completed</th>
+                        </tr>
+                    </thead>
+                    <tbody id="completedTasksBody">
+                        <tr><td colspan="4" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Points Breakdown -->
+        <div class="card" style="margin:0 1.5rem 1.25rem;">
+            <div class="card-header">
+                <h3>🏅 Points History</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Task</th>
+                            <th>Points</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pointsBody">
+                        <tr><td colspan="4" class="text-center">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="card" style="margin:0 1.5rem 1.25rem;">
+            <div class="card-header">
+                <h3>🤖 AI Insights</h3>
+            </div>
+            <div id="aiInsightsContent" class="ai-insights">
+                <p class="text-center text-muted">Loading AI analysis…</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Transfer Step Modal -->
+    <div class="modal-overlay hidden" id="transferModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Transfer Next Step</h3>
+                <button class="modal-close" onclick="closeModal('transferModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="transferStepId">
+                <div class="form-group">
+                    <label class="form-label">Transfer to Employee</label>
+                    <select id="transferEmployee" class="form-control">
+                        <option value="">Select employee…</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="closeModal('transferModal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="doTransfer()">Transfer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="js/app.js"></script>
+    <script src="js/employee-dashboard.js"></script>
+</body>
+</html>
