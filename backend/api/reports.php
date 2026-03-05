@@ -132,7 +132,7 @@ function createReport(Report $reportModel, Employee $empModel, array $body, arra
         'status'       => $body['status']       ?? 'draft',
     ]);
 
-    Response::success($reportModel->findById($reportId), 201);
+    Response::success($reportModel->findById($reportId), '', 201);
 }
 
 function updateReport(Report $reportModel, int $id, array $body, array $user, Employee $empModel): never {

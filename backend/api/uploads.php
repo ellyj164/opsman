@@ -102,7 +102,7 @@ if ($method === 'POST') {
     $docId = (int) $db->lastInsertId();
     $doc   = $db->prepare("SELECT * FROM documents WHERE id = :id");
     $doc->execute([':id' => $docId]);
-    Response::success($doc->fetch(), 201);
+    Response::success($doc->fetch(), '', 201);
 }
 
 Response::error('Method not allowed', 405);

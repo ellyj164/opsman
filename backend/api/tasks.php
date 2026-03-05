@@ -154,7 +154,7 @@ function createTask(Task $taskModel, Employee $empModel, PDO $db, array $body, a
         ]);
     }
 
-    Response::success($taskModel->findById($taskId), 201);
+    Response::success($taskModel->findById($taskId), '', 201);
 }
 
 function updateTask(Task $taskModel, int $id, array $body): never {

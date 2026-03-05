@@ -151,7 +151,7 @@ function createEmployee(PDO $db, Employee $empModel, User $userModel, array $bod
         ]);
 
         $db->commit();
-        Response::success($empModel->findById($empId), 201);
+        Response::success($empModel->findById($empId), '', 201);
     } catch (Exception $e) {
         $db->rollBack();
         Response::error('Failed to create employee: ' . $e->getMessage(), 500);

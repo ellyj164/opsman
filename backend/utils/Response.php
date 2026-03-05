@@ -9,10 +9,15 @@ class Response {
      * Send a successful JSON response.
      *
      * @param mixed  $data    Payload to encode
+     * @param string $message Optional human-readable message
      * @param int    $status  HTTP status code (default 200)
      */
-    public static function success(mixed $data = null, int $status = 200): never {
-        self::send(['success' => true, 'data' => $data], $status);
+    public static function success(mixed $data = null, string $message = '', int $status = 200): never {
+        $body = ['success' => true, 'data' => $data];
+        if ($message !== '') {
+            $body['message'] = $message;
+        }
+        self::send($body, $status);
     }
 
     /**
