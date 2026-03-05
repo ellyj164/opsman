@@ -39,7 +39,7 @@ async function handleLogin(e) {
     setLoading('loginBtn', true);
 
     try {
-        const res = await fetch(API_BASE_URL + '/auth.php', {
+        const res = await fetch(API_BASE_URL + '/api/auth.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({

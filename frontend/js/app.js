@@ -3,7 +3,7 @@
  * Shared utilities used across all pages.
  */
 
-const API_BASE_URL = '../backend/api';
+const API_BASE_URL = '../backend';
 
 // ── Auth helpers ──────────────────────────────────────────────────────
 
