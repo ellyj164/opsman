@@ -96,7 +96,7 @@ async function uploadFile(file, reportId) {
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     try {
-        const res = await fetch(API_BASE_URL + '/uploads.php', {
+        const res = await fetch(API_BASE_URL + '/api/uploads.php', {
             method: 'POST',
             headers,
             body: formData,
