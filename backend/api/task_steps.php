@@ -78,7 +78,7 @@ switch ($method) {
 
             case 'assign':
                 requireManager($user);
-                assignStepAction($stepModel, $notifModel, $body, $user);
+                assignStepAction($stepModel, $empModel, $notifModel, $body, $user);
                 break;
 
             case 'transfer':
@@ -196,7 +196,7 @@ function completeStepAction(
     Response::success($stepModel->findById($stepId));
 }
 
-function assignStepAction(TaskStep $stepModel, Notification $notifModel, array $body, array $user): never {
+function assignStepAction(TaskStep $stepModel, Employee $empModel, Notification $notifModel, array $body, array $user): never {
     $stepId = (int) ($body['step_id'] ?? 0);
     $empId  = (int) ($body['employee_id'] ?? 0);
 
@@ -211,12 +211,15 @@ function assignStepAction(TaskStep $stepModel, Notification $notifModel, array $
 
     $stepModel->assignStep($stepId, $empId);
 
-    // Notify the assigned employee
-    $notifModel->create([
-        'user_id' => $empId,
-        'message' => "You have been assigned step \"{$step['step_name']}\"",
-        'type'    => 'task_assigned',
-    ]);
+    // Notify the assigned employee (look up user_id from employee record)
+    $assignedEmp = $empModel->findById($empId);
+    if ($assignedEmp) {
+        $notifModel->create([
+            'user_id' => $assignedEmp['user_id'],
+            'message' => "You have been assigned step \"{$step['step_name']}\"",
+            'type'    => 'task_assigned',
+        ]);
+    }
 
     Response::success($stepModel->findById($stepId));
 }
