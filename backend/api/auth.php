@@ -44,6 +44,10 @@ if ($method === 'POST' && $action === 'login') {
     handleLogin($db, $body);
 }
 
+if ($method === 'POST' && $action === 'register') {
+    handleRegister($db, $body);
+}
+
 if ($method === 'POST' && $action === 'logout') {
     $user = authenticate();
     handleLogout($db, $user);
@@ -150,4 +154,65 @@ function handleChangePassword(PDO $db, array $user, array $body): never {
 
     (new User($db))->updatePassword($user['id'], $body['new_password']);
     Response::success(['message' => 'Password updated successfully']);
+}
+
+function handleRegister(PDO $db, array $body): never {
+    $v = new Validator();
+    $v->required('username', $body['username'] ?? '')
+      ->required('email',    $body['email']    ?? '')
+      ->required('password', $body['password'] ?? '')
+      ->email('email',       $body['email']    ?? '')
+      ->minLength('username', $body['username'] ?? '', 3)
+      ->maxLength('username', $body['username'] ?? '', 50)
+      ->minLength('password', $body['password'] ?? '', 8);
+    if ($v->fails()) {
+        Response::error(implode('; ', $v->errors()), 422);
+    }
+
+    $userModel = new User($db);
+
+    // Check if username already exists
+    if ($userModel->findByUsername($body['username'])) {
+        Response::error('Username is already taken', 409);
+    }
+
+    // Check if email already exists
+    if ($userModel->findByEmail($body['email'])) {
+        Response::error('Email is already registered', 409);
+    }
+
+    $userId = $userModel->create([
+        'username' => $body['username'],
+        'email'    => $body['email'],
+        'password' => $body['password'],
+        'role'     => 'field_employee',
+    ]);
+
+    if (!$userId) {
+        Response::error('Registration failed. Please try again.', 500);
+    }
+
+    // Auto-login: generate token
+    $token     = bin2hex(random_bytes(TOKEN_LENGTH));
+    $expiresAt = date('Y-m-d H:i:s', time() + TOKEN_EXPIRY_HRS * 3600);
+    $userModel->updateToken($userId, $token, $expiresAt);
+
+    // Log activity
+    $db->prepare(
+        "INSERT INTO activity_logs (user_id, action, details, ip_address)
+         VALUES (:uid, 'register', 'New user registered', :ip)"
+    )->execute([':uid' => $userId, ':ip' => $_SERVER['REMOTE_ADDR'] ?? '']);
+
+    $user = $userModel->findById($userId);
+
+    Response::success([
+        'token'      => $token,
+        'expires_at' => $expiresAt,
+        'user'       => [
+            'id'       => $user['id'],
+            'username' => $user['username'],
+            'email'    => $user['email'],
+            'role'     => $user['role'],
+        ],
+    ], 201);
 }
