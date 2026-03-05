@@ -15,7 +15,15 @@ require_once __DIR__ . '/../utils/Response.php';
  * @return array  Authenticated user row
  */
 function authenticate(): array {
-    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    // Check multiple sources for the Authorization header (CGI/FastCGI compat)
+    $header = $_SERVER['HTTP_AUTHORIZATION']
+           ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+           ?? '';
+
+    if (!$header && function_exists('apache_request_headers')) {
+        $apacheHeaders = array_change_key_case(apache_request_headers(), CASE_LOWER);
+        $header = $apacheHeaders['authorization'] ?? '';
+    }
 
     if (!preg_match('/^Bearer\s+(\S+)$/i', $header, $m)) {
         Response::error('Missing or malformed Authorization header', 401);
