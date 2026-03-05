@@ -3,7 +3,17 @@
  * Shared utilities used across all pages.
  */
 
-const API_BASE_URL = '../backend';
+const API_BASE_URL = (function () {
+    const loc = window.location;
+    const pathParts = loc.pathname.split('/');
+    // Remove the filename (e.g., dashboard.html)
+    pathParts.pop();
+    // Remove 'frontend' directory if present
+    if (pathParts[pathParts.length - 1] === 'frontend') {
+        pathParts.pop();
+    }
+    return loc.origin + pathParts.join('/') + '/backend';
+}());
 
 // ── Auth helpers ──────────────────────────────────────────────────────
 
